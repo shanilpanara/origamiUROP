@@ -40,4 +40,6 @@ class Polygon:
 
     def __init__(self, edges: np.ndarray):
         self.edges = edges
-        self.n_sides = edges.shape[0]  # no of rows
+        self.n_sides = edges.shape[0]  # no. of sides = no of rows
+        for i 
+        self.interior_angles
