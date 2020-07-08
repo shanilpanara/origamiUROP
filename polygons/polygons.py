@@ -10,6 +10,8 @@ class Vertex:
 
     def __init__(self, position: np.ndarray):
         self.position = position
+        self.x = position[:, 0]
+        self.y = position[:, 1]
 
     def distance(self, another_vertex: Vertex) -> float:
         return np.linalg.norm(self.position - another_vertex.position)
@@ -38,8 +40,19 @@ class Polygon:
     The first vertex on the starting edge = the last vertex on the final edge
     """
 
-    def __init__(self, edges: np.ndarray):
-        self.edges = edges
-        self.n_sides = edges.shape[0]  # no. of sides = no of rows
-        for i 
-        self.interior_angles
+    def __init__(self, verticies: np.ndarray):
+        """
+        4 or more vertex objects given, each value on a given row
+        
+        What to do:
+        - Edges (using the above class)
+        - Interior angles
+            - use cosine formula with vectors 
+        """
+        self.n_sides = self.edges.shape[0]  # no. of sides = no of rows
+        self.interior_angles = interiorAngles()
+
+        @property
+        def interiorAngles(self) -> np.ndarray:  # containing floats
+            return
+
