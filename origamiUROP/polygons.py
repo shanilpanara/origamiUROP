@@ -1,8 +1,10 @@
+import re
+from typing import List
+
 import numpy as np
 import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
-from typing import List
 
 # class Vertex:
 #     """
@@ -21,21 +23,23 @@ from typing import List
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
-
-class Edge:
+class Edge():
     """ 
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_type: int = 0):
         self.vertices = np.array([vertex_1, vertex_2])
-        self.type = EDGE_TYPE[edge_type]
-        ## DEFAULT INITIALISED VALUES
-        self.dir = np.array([0.0, 0.0, 1.0])  # direction
-        self.linear_velocity = 0.0
-        self.angular_velocity = 0.0
 
-    def __len__(self):
+        # don't use type because that's a protected function in Python
+        self.kind = EDGE_TYPE[edge_type]
+        
+        # these belong to individual nucleotides not the whole edge
+        # self.linear_velocity = 0
+        # self.angular_velocity = 0
+
+    @property
+    def length(self):
         return np.linalg.norm(self.vertices[1] - self.vertices[0])
 
     @property
@@ -43,7 +47,7 @@ class Edge:
         return self.vertices[1] - self.vertices[0]
 
     @property
-    def unit_vector(self):
+    def unit_vector(self) -> np.ndarray:
         return self.vector / (self.vector ** 2).sum() ** 0.5
 
 
@@ -61,7 +65,7 @@ class BoundaryPolygon():
     def __init__(self, vertices: np.ndarray):
         """ 4 or more vertex objects given, each value on a given row """
 
-        assert vertices.shape[1] == 3
+        assert vertices.shape[1] == 3 or vertices.shape[1] == 2
         self.vertices = vertices
 
     @property
@@ -75,28 +79,28 @@ class BoundaryPolygon():
         """
         edges = []
         for i in range(self.n_edges):
-            self.edges.append(
-                Edge(self.vertices[i], self.vertices[i+1], 0)
+            edges.append(
+                Edge(self.vertices[i-1], self.vertices[i], 0)
             )
         return edges
 
     @property
-    def x(self):
+    def x(self) -> np.ndarray:
         return self.vertices[:, 0]
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         return self.vertices[:, 1]
 
     @property
-    def z(self):
+    def z(self) -> np.ndarray:
         try:
             return self.vertices[:, 2]
-        except IndexError:
-            return np.array([0] * len(self.vertices))
+        except IndexError as err:
+            raise err(f'Trying to access Polygon.z but {self} is only 2D!')
 
     def __repr__(self) -> str:
-        return f"<Polygon Edges[{len(self.n_edges)}] Vertices[{}]>"
+        return f"<Polygon{self.vertices.shape[1]}D Vertices[{self.vertices.shape[0]}]>"
 
     def __str__(self) -> str:
         return "This polygon has {} edges".format(self.n_edges)
@@ -105,17 +109,44 @@ class BoundaryPolygon():
         triangulation = tri.Triangulation(self.vertices[:, 0], self.vertices[:, 1])
         triangles = triangulation.get_masked_triangles()
         cells = [("triangle", triangles)]
-        filename = filename + ".stl"
-        print(filename)
-        meshio.write_points_cells(filename, self.vertices, cells)
+        meshio.write_points_cells(fout, self.vertices, cells)
 
-    def write_PLY(self, fout : str):
-        pass
+    def write_PLY(self, fout : str, comments : List[str] = []):
+        """
+        Writes the BoundaryPolygon to a ASCII PLY File.
+        """
 
-    def plot_vertices_2D(
+        # begin header
+        output_string = "PLY\nformat ascii 1.0\n"
+        for comment in comments:
+            output_string += f'comment {comment}\n'
+        output_string += f"element vertex {self.vertices.shape[1]}\n"
+        output_string += ''.join(
+                [f"property float {i}\n" for i in ['x', 'y', 'z']]
+            )
+        output_string += \
+            "element face 1\nproperty list uchar int vertex_index\nend_header\n"
+        # end of header
+
+        # vertex position list
+        # regex substitutes out '[' and ']' characters and the replace
+        # removes the space at the beginning of each new line
+        output_string += \
+            re.sub(r"\[|\]", '', self.vertices.__str__()).replace('\n ', '\n')
+
+        # only one face in face list e.g. for a square 4 0 1 2 3
+        output_string += f"\n{self.vertices.shape[1]} "
+        output_string += ' '.join([str(i) for i in range(self.vertices.shape[1])])
+        output_string += '\n'
+
+        # finished generating file so now writing
+        with open(fout, 'w') as f:
+            f.write(output_string)
+
+    def plot2D(
             self, 
             ax : plt.Axes = None, 
-            fname : str = None, 
+            fout : str = None, 
             show : bool = True,
             **kwargs
         ):
@@ -132,8 +163,6 @@ class BoundaryPolygon():
         if show:
             fig.show()
             
-
-
 # ---plot---#
 def plot_the_vertices(vertices: np.ndarray):
     fig = plt.figure()
