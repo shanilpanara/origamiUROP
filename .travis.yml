@@ -23,7 +23,7 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - conda activate test-environment
   - conda install pandas numpy scipy matplotlib pytest
-  - conda install meshio
+  - conda install -c conda-forge meshio
   - pip install .
   
 script: 
