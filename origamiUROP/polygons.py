@@ -2,6 +2,7 @@ import numpy as np
 import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+from typing import List
 
 # class Vertex:
 #     """
@@ -50,7 +51,7 @@ def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
     return Edge(vertices_of_polygon[index_1, :], vertices_of_polygon[index_2, :],)
 
 
-class BoundaryPolygon:
+class BoundaryPolygon():
     """
     A Polygon is a cyclic combination of 3 or more edges
 
@@ -60,31 +61,77 @@ class BoundaryPolygon:
     def __init__(self, vertices: np.ndarray):
         """ 4 or more vertex objects given, each value on a given row """
 
+        assert vertices.shape[1] == 3
         self.vertices = vertices
-        self.x = vertices[:, 0]
-        self.y = vertices[:, 1]
-        self.z = vertices[:, 2]
-        self.n_edges = self.vertices.shape[0]  # no. of sides = no of rows
 
-        self.edges = []
+    @property
+    def n_edges(self) -> np.array:
+        return self.vertices.shape[0]
 
-        # makes a index which "wraps around on itself, e.g. 4 edges -> [0,1,2,3,0]"
-        counter = np.append(np.arange(0, self.n_edges), 0)
+    @property
+    def edges(self) -> List[Edge]:
+        """
+        Iterate over all vertices and return a list of Edge instances
+        """
+        edges = []
         for i in range(self.n_edges):
             self.edges.append(
-                define_edges(self.vertices, counter[i], counter[i + 1], 0)
+                Edge(self.vertices[i], self.vertices[i+1], 0)
             )
+        return edges
 
-    def __str__(self):
+    @property
+    def x(self):
+        return self.vertices[:, 0]
+
+    @property
+    def y(self):
+        return self.vertices[:, 1]
+
+    @property
+    def z(self):
+        try:
+            return self.vertices[:, 2]
+        except IndexError:
+            return np.array([0] * len(self.vertices))
+
+    def __repr__(self) -> str:
+        return f"<Polygon Edges[{len(self.n_edges)}] Vertices[{}]>"
+
+    def __str__(self) -> str:
         return "This polygon has {} edges".format(self.n_edges)
 
-    def write_STL(self, filename: str):
+    def write_STL(self, fout : str):
         triangulation = tri.Triangulation(self.vertices[:, 0], self.vertices[:, 1])
         triangles = triangulation.get_masked_triangles()
         cells = [("triangle", triangles)]
         filename = filename + ".stl"
         print(filename)
         meshio.write_points_cells(filename, self.vertices, cells)
+
+    def write_PLY(self, fout : str):
+        pass
+
+    def plot_vertices_2D(
+            self, 
+            ax : plt.Axes = None, 
+            fname : str = None, 
+            show : bool = True,
+            **kwargs
+        ):
+        """
+        Assumes that the shape is 2D and lies on the z=0 plane.
+
+        """
+        if not ax:
+            fig, ax = plt.subplots()
+        ax.plot(self.x, self.y, 'k-', **kwargs)
+        ax.set_aspect("equal", "datalim")
+        if fout:
+            fig.savefig(fout)
+        if show:
+            fig.show()
+            
 
 
 # ---plot---#
@@ -125,33 +172,3 @@ def make_polygon(polygon_vertices: np.ndarray):
     print(f"It's vector is {SHAPE.edges[i].vector}\n")
     print(f"It's unit vector is {SHAPE.edges[i].unit_vector}")
     return
-
-
-###---stored arrays of some shapes---###
-square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
-trapezium = np.array([[0, 0, 0], [1.0, 10.0, 0.0], [11.0, 10.0, 0.0], [15.0, 0.0, 0.0]])
-
-no = 0.866025
-hexagon = np.array(
-    [[0, 1, 0], [no, 0.5, 0], [no, -0.5, 0], [0, -1, 0], [-no, -0.5, 0], [-no, 0.5, 0]]
-)
-
-star = np.array(
-    [
-        [0, 300, 0],
-        [100, 110, 0],
-        [300, 70, 0],
-        [160, -90, 0],
-        [190, -300, 0],
-        [0, -210, 0],
-        [-190, -300, 0],
-        [-160, -90, 0],
-        [-300, 70, 0],
-        [-100, 110, 0],
-    ]
-)
-
-
-###---run the program---###
-SHAPE = BoundaryPolygon(star)
-make_polygon(star)
