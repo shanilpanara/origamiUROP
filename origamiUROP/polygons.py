@@ -164,7 +164,7 @@ def plot_the_vertices(vertices: np.ndarray):
     fig = plt.figure()
     nodes = vertices
     triangulation = tri.Triangulation(nodes[:, 0], nodes[:, 1])
-    hello = triangulation.get_masked_triangles()
+    # hello = triangulation.get_masked_triangles()
     plt.triplot(triangulation, "-k")
     plt.axes().set_aspect("equal", "datalim")
     fig.show()
@@ -176,9 +176,6 @@ def plot_the_vertices(vertices: np.ndarray):
     plt.plot(new_nodes_x, new_nodes_y)
     plt.axes().set_aspect("equal", "datalim")
     fig2.show()
-
-    print(SHAPE.x)
-    return
 
 
 # ---run the script---#
