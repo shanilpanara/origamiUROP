@@ -23,7 +23,8 @@ import matplotlib.tri as tri
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
-class Edge():
+
+class Edge:
     """ 
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
@@ -33,7 +34,7 @@ class Edge():
 
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_type]
-        
+
         # these belong to individual nucleotides not the whole edge
         # self.linear_velocity = 0
         # self.angular_velocity = 0
@@ -55,7 +56,7 @@ def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
     return Edge(vertices_of_polygon[index_1, :], vertices_of_polygon[index_2, :],)
 
 
-class BoundaryPolygon():
+class BoundaryPolygon:
     """
     A Polygon is a cyclic combination of 3 or more edges
 
@@ -79,9 +80,7 @@ class BoundaryPolygon():
         """
         edges = []
         for i in range(self.n_edges):
-            edges.append(
-                Edge(self.vertices[i-1], self.vertices[i], 0)
-            )
+            edges.append(Edge(self.vertices[i - 1], self.vertices[i], 0))
         return edges
 
     @property
@@ -97,7 +96,7 @@ class BoundaryPolygon():
         try:
             return self.vertices[:, 2]
         except IndexError as err:
-            raise err(f'Trying to access Polygon.z but {self} is only 2D!')
+            raise err(f"Trying to access Polygon.z but {self} is only 2D!")
 
     def __repr__(self) -> str:
         return f"<Polygon{self.vertices.shape[1]}D Vertices[{self.vertices.shape[0]}]>"
@@ -105,13 +104,13 @@ class BoundaryPolygon():
     def __str__(self) -> str:
         return "This polygon has {} edges".format(self.n_edges)
 
-    def write_STL(self, fout : str):
+    def write_STL(self, fout: str):
         triangulation = tri.Triangulation(self.vertices[:, 0], self.vertices[:, 1])
         triangles = triangulation.get_masked_triangles()
         cells = [("triangle", triangles)]
         meshio.write_points_cells(fout, self.vertices, cells)
 
-    def write_PLY(self, fout : str, comments : List[str] = []):
+    def write_PLY(self, fout: str, comments: List[str] = []):
         """
         Writes the BoundaryPolygon to a ASCII PLY File.
         """
@@ -119,50 +118,47 @@ class BoundaryPolygon():
         # begin header
         output_string = "PLY\nformat ascii 1.0\n"
         for comment in comments:
-            output_string += f'comment {comment}\n'
+            output_string += f"comment {comment}\n"
         output_string += f"element vertex {self.vertices.shape[0]}\n"
-        output_string += ''.join(
-                [f"property float {i}\n" for i in ['x', 'y', 'z']]
-            )
-        output_string += \
+        output_string += "".join([f"property float {i}\n" for i in ["x", "y", "z"]])
+        output_string += (
             "element face 1\nproperty list uchar int vertex_index\nend_header\n"
+        )
         # end of header
 
         # vertex position list
         # regex substitutes out '[' and ']' characters and the replace
         # removes the space at the beginning of each new line
-        output_string += \
-            re.sub(r"\[|\]", '', self.vertices.__str__()).replace('\n ', '\n')
+        output_string += re.sub(r"\[|\]", "", self.vertices.__str__()).replace(
+            "\n ", "\n"
+        )
 
         # only one face in face list e.g. for a square 4 0 1 2 3
         output_string += f"\n{self.vertices.shape[1]} "
-        output_string += ' '.join([str(i) for i in range(self.vertices.shape[1])])
-        output_string += '\n'
+        output_string += " ".join([str(i) for i in range(self.vertices.shape[1])])
+        output_string += "\n"
 
         # finished generating file so now writing
-        with open(fout, 'w') as f:
+        with open(fout, "w") as f:
             f.write(output_string)
 
     def plot2D(
-            self, 
-            ax : plt.Axes = None, 
-            fout : str = None, 
-            show : bool = True,
-            **kwargs
-        ):
+        self, ax: plt.Axes = None, fout: str = None, show: bool = True, **kwargs
+    ):
         """
         Assumes that the shape is 2D and lies on the z=0 plane.
 
         """
         if not ax:
             fig, ax = plt.subplots()
-        ax.plot(self.x, self.y, 'k-', **kwargs)
+        ax.plot(self.x, self.y, "k-", **kwargs)
         ax.set_aspect("equal", "datalim")
         if fout:
             fig.savefig(fout)
         if show:
             fig.show()
-            
+
+
 # ---plot---#
 def plot_the_vertices(vertices: np.ndarray):
     fig = plt.figure()
@@ -186,7 +182,7 @@ def plot_the_vertices(vertices: np.ndarray):
 
 
 # ---run the script---#
-def make_polygon(polygon_vertices: np.ndarray):
+def make_polygon(polygon_vertices: np.ndarray, SHAPE):
 
     plot_the_vertices(polygon_vertices)
 
@@ -196,8 +192,8 @@ def make_polygon(polygon_vertices: np.ndarray):
     print(
         f"The coordinates of edge number {i+1} are: {str(SHAPE.edges[i].vertices[0])} and {str(SHAPE.edges[i].vertices[1])} \n"
     )
-    print(f"It has a size of {round(SHAPE.edges[i].__len__(),4)}\n")
-    print(f"This edge is a type of {SHAPE.edges[i].type} edge \n")
+    print(f"It has a size of {round(SHAPE.edges[i].length,4)}\n")
+    print(f"This edge is a type of {SHAPE.edges[i].kind} edge \n")
     print(f"It's vector is {SHAPE.edges[i].vector}\n")
     print(f"It's unit vector is {SHAPE.edges[i].unit_vector}")
     return

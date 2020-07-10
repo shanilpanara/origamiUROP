@@ -1,5 +1,5 @@
 import numpy as np
-from origamiUROP.polygons import BoundaryPolygon
+from origamiUROP.polygons import BoundaryPolygon, make_polygon
 
 ###---stored arrays of some shapes---###
 square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
@@ -28,4 +28,4 @@ star = np.array(
 
 ###---run the program---###
 SHAPE = BoundaryPolygon(star)
-make_polygon(star)
+make_polygon(star, SHAPE)
