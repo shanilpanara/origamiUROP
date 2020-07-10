@@ -45,30 +45,17 @@ cube.save("cube.stl", mode=stl.Mode.ASCII)
 from matplotlib import pyplot
 from mpl_toolkits import mplot3d
 
-""" # Create a new plot
+# Create a new plot
 figure = pyplot.figure()
 axes = mplot3d.Axes3D(figure)
 
 # Render the cube
 axes.add_collection3d(mplot3d.art3d.Poly3DCollection(cube.vectors))
 
+
 # Auto scale to the mesh size
 scale = cube.points.flatten("A")
-axes.auto_scale_xyz(scale, scale, scale) """
+axes.auto_scale_xyz(scale, scale, scale)
 
 # Show the plot to the screen
-# pyplot.show()
-
-import vtkplotlib as vpl
-
-""" 
-path = "your path here.stl"
-
-# Read the STL using numpy-stl
-mesh = Mesh.from_file(path)
- """
-# Plot the mesh
-vpl.mesh_plot(cube)
-
-# Show the figure
-vpl.show()
+pyplot.show()
