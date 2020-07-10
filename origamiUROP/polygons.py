@@ -120,7 +120,7 @@ class BoundaryPolygon():
         output_string = "PLY\nformat ascii 1.0\n"
         for comment in comments:
             output_string += f'comment {comment}\n'
-        output_string += f"element vertex {self.vertices.shape[1]}\n"
+        output_string += f"element vertex {self.vertices.shape[0]}\n"
         output_string += ''.join(
                 [f"property float {i}\n" for i in ['x', 'y', 'z']]
             )
