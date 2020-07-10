@@ -1,3 +1,6 @@
+import re
+from typing import List
+
 import numpy as np
 import meshio
 import matplotlib.pyplot as plt
@@ -20,21 +23,23 @@ import matplotlib.tri as tri
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
-
-class Edge:
+class Edge():
     """ 
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_type: int = 0):
         self.vertices = np.array([vertex_1, vertex_2])
-        self.type = EDGE_TYPE[edge_type]
-        ## DEFAULT INITIALISED VALUES
-        self.dir = np.array([0.0, 0.0, 1.0])  # direction
-        self.linear_velocity = 0.0
-        self.angular_velocity = 0.0
 
-    def __len__(self):
+        # don't use type because that's a protected function in Python
+        self.kind = EDGE_TYPE[edge_type]
+        
+        # these belong to individual nucleotides not the whole edge
+        # self.linear_velocity = 0
+        # self.angular_velocity = 0
+
+    @property
+    def length(self):
         return np.linalg.norm(self.vertices[1] - self.vertices[0])
 
     @property
@@ -42,7 +47,7 @@ class Edge:
         return self.vertices[1] - self.vertices[0]
 
     @property
-    def unit_vector(self):
+    def unit_vector(self) -> np.ndarray:
         return self.vector / (self.vector ** 2).sum() ** 0.5
 
 
@@ -50,7 +55,7 @@ def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
     return Edge(vertices_of_polygon[index_1, :], vertices_of_polygon[index_2, :],)
 
 
-class BoundaryPolygon:
+class BoundaryPolygon():
     """
     A Polygon is a cyclic combination of 3 or more edges
 
@@ -60,33 +65,104 @@ class BoundaryPolygon:
     def __init__(self, vertices: np.ndarray):
         """ 4 or more vertex objects given, each value on a given row """
 
+        assert vertices.shape[1] == 3 or vertices.shape[1] == 2
         self.vertices = vertices
-        self.x = vertices[:, 0]
-        self.y = vertices[:, 1]
-        self.z = vertices[:, 2]
-        self.n_edges = self.vertices.shape[0]  # no. of sides = no of rows
 
-        self.edges = []
+    @property
+    def n_edges(self) -> np.array:
+        return self.vertices.shape[0]
 
-        # makes a index which "wraps around on itself, e.g. 4 edges -> [0,1,2,3,0]"
-        counter = np.append(np.arange(0, self.n_edges), 0)
+    @property
+    def edges(self) -> List[Edge]:
+        """
+        Iterate over all vertices and return a list of Edge instances
+        """
+        edges = []
         for i in range(self.n_edges):
-            self.edges.append(
-                define_edges(self.vertices, counter[i], counter[i + 1], 0)
+            edges.append(
+                Edge(self.vertices[i-1], self.vertices[i], 0)
             )
+        return edges
 
-    def __str__(self):
+    @property
+    def x(self) -> np.ndarray:
+        return self.vertices[:, 0]
+
+    @property
+    def y(self) -> np.ndarray:
+        return self.vertices[:, 1]
+
+    @property
+    def z(self) -> np.ndarray:
+        try:
+            return self.vertices[:, 2]
+        except IndexError as err:
+            raise err(f'Trying to access Polygon.z but {self} is only 2D!')
+
+    def __repr__(self) -> str:
+        return f"<Polygon{self.vertices.shape[1]}D Vertices[{self.vertices.shape[0]}]>"
+
+    def __str__(self) -> str:
         return "This polygon has {} edges".format(self.n_edges)
 
-    def write_STL(self, filename: str):
+    def write_STL(self, fout : str):
         triangulation = tri.Triangulation(self.vertices[:, 0], self.vertices[:, 1])
         triangles = triangulation.get_masked_triangles()
         cells = [("triangle", triangles)]
-        filename = filename + ".stl"
-        print(filename)
-        meshio.write_points_cells(filename, self.vertices, cells)
+        meshio.write_points_cells(fout, self.vertices, cells)
 
+    def write_PLY(self, fout : str, comments : List[str] = []):
+        """
+        Writes the BoundaryPolygon to a ASCII PLY File.
+        """
 
+        # begin header
+        output_string = "PLY\nformat ascii 1.0\n"
+        for comment in comments:
+            output_string += f'comment {comment}\n'
+        output_string += f"element vertex {self.vertices.shape[0]}\n"
+        output_string += ''.join(
+                [f"property float {i}\n" for i in ['x', 'y', 'z']]
+            )
+        output_string += \
+            "element face 1\nproperty list uchar int vertex_index\nend_header\n"
+        # end of header
+
+        # vertex position list
+        # regex substitutes out '[' and ']' characters and the replace
+        # removes the space at the beginning of each new line
+        output_string += \
+            re.sub(r"\[|\]", '', self.vertices.__str__()).replace('\n ', '\n')
+
+        # only one face in face list e.g. for a square 4 0 1 2 3
+        output_string += f"\n{self.vertices.shape[1]} "
+        output_string += ' '.join([str(i) for i in range(self.vertices.shape[1])])
+        output_string += '\n'
+
+        # finished generating file so now writing
+        with open(fout, 'w') as f:
+            f.write(output_string)
+
+    def plot2D(
+            self, 
+            ax : plt.Axes = None, 
+            fout : str = None, 
+            show : bool = True,
+            **kwargs
+        ):
+        """
+        Assumes that the shape is 2D and lies on the z=0 plane.
+
+        """
+        if not ax:
+            fig, ax = plt.subplots()
+        ax.plot(self.x, self.y, 'k-', **kwargs)
+        ax.set_aspect("equal", "datalim")
+        if fout:
+            fig.savefig(fout)
+        if show:
+            fig.show()
+            
 # ---plot---#
 def plot_the_vertices(vertices: np.ndarray):
     fig = plt.figure()
@@ -125,33 +201,3 @@ def make_polygon(polygon_vertices: np.ndarray):
     print(f"It's vector is {SHAPE.edges[i].vector}\n")
     print(f"It's unit vector is {SHAPE.edges[i].unit_vector}")
     return
-
-
-###---stored arrays of some shapes---###
-square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
-trapezium = np.array([[0, 0, 0], [1.0, 10.0, 0.0], [11.0, 10.0, 0.0], [15.0, 0.0, 0.0]])
-
-no = 0.866025
-hexagon = np.array(
-    [[0, 1, 0], [no, 0.5, 0], [no, -0.5, 0], [0, -1, 0], [-no, -0.5, 0], [-no, 0.5, 0]]
-)
-
-star = np.array(
-    [
-        [0, 300, 0],
-        [100, 110, 0],
-        [300, 70, 0],
-        [160, -90, 0],
-        [190, -300, 0],
-        [0, -210, 0],
-        [-190, -300, 0],
-        [-160, -90, 0],
-        [-300, 70, 0],
-        [-100, 110, 0],
-    ]
-)
-
-
-###---run the program---###
-SHAPE = BoundaryPolygon(star)
-make_polygon(star)
