@@ -22,8 +22,8 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - conda activate test-environment
-  - conda install pandas numpy scipy matplotlib pytest scikit-learn
-  - conda activate test-environment
+  - conda install pandas numpy scipy matplotlib pytest
+  - conda install -c conda-forge meshio
   - pip install .
   
 script: 

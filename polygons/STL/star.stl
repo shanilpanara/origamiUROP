@@ -1,0 +1,93 @@
+solid
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 160 -90 0
+  vertex 190 -300 0
+  vertex 300 70 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 100 110 0
+  vertex 160 -90 0
+  vertex 300 70 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex -300 70 0
+  vertex -190 -300 0
+  vertex -160 -90 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex -300 70 0
+  vertex -160 -90 0
+  vertex -100 110 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 0 -210 0
+  vertex -190 -300 0
+  vertex 190 -300 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 190 -300 0
+  vertex 160 -90 0
+  vertex 0 -210 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 160 -90 0
+  vertex -160 -90 0
+  vertex 0 -210 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 0 -210 0
+  vertex -160 -90 0
+  vertex -190 -300 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 0 300 0
+  vertex 100 110 0
+  vertex 300 70 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex -300 70 0
+  vertex -100 110 0
+  vertex 0 300 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 0 300 0
+  vertex -100 110 0
+  vertex 100 110 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex -100 110 0
+  vertex -160 -90 0
+  vertex 160 -90 0
+ endloop
+endfacet
+facet normal 0.0 0.0 1.0
+ outer loop
+  vertex 160 -90 0
+  vertex 100 110 0
+  vertex -100 110 0
+ endloop
+endfacet
+endsolid
