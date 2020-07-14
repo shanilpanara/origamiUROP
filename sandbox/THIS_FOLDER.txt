@@ -1,4 +1,0 @@
-This folder, /origamiUROP/origamiUROP is for random python docs
-Just to try things out with :)
-
-Woop, I'm getting the hang of git and feel like a hardcore programmer :D 
