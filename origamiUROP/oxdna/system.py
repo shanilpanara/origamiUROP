@@ -96,12 +96,12 @@ class System:
         configuration file and topology file required
         to run a simulation using oxDNA
         """
-        with open(f"{prefix}.conf", "w") as f:
+        with open(f"oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
             f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
             f.write(oxDNA_string(self.configuration))
 
-        with open(f'{prefix}.top', 'w') as f:
+        with open(f'oxnda.{prefix}.top', 'w') as f:
             f.write(f'{len(self.nucleotides)} {len(self.strands)}\n')
             f.write(oxDNA_string(self.topology))
