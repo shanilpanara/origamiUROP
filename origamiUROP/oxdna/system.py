@@ -1,6 +1,7 @@
 import numpy as np
 
-class System():
+
+class System:
     """
     Object representing an oxDNA system
     Contains strands
@@ -11,20 +12,17 @@ class System():
     E_pot --- Potential energy
     E_kin --- Kinetic energy
     """
+
     def __init__(
-        self, 
-        box : np.ndarray,
-        time : int = 0,
-        E_pot : float = 0.,
-        E_kin : float = 0.
+        self, box: np.ndarray, time: int = 0, E_pot: float = 0.0, E_kin: float = 0.0
     ):
 
-    self.box = box
-    self.time = time
-    self.E_pot = E_pot
-    self.E_kin = E_kin
+        self.box = box
+        self.time = time
+        self.E_pot = E_pot
+        self.E_kin = E_kin
 
-    self._strands = []
+        self._strands = []
 
     @property
     def E_tot(self):
@@ -43,18 +41,17 @@ class System():
             result += strand._nucleotides
         return result
 
-    def write_oxDNA(self, prefix : str = 'out'):
+    def write_oxDNA(self, prefix: str = "out"):
         """
         Writes two files *.conf and *.top for the
         configuration file and topology file required
         to run a simulation using oxDNA
         """
-        with open(f'{prefix}.conf', 'w') as f:
-            f.write(f't = {self.time}\n')
-            f.write(f'b = {self.box[0]} {self.box[1]} {self.box[2]}\n')
-            f.write(f'E = {self.E_pot} {self.E_kin} {self.E_tot}\n')
+        with open(f"{prefix}.conf", "w") as f:
+            f.write(f"t = {self.time}\n")
+            f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
+            f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
 
-        with open(f'{prefix}.top', 'w') as f:
-            f.write(f'{len(self.nucleotides)} {len(self.strands)} {}\n')
+        with open(f"{prefix}.top", "w") as f:
+            f.write(f"{len(self.nucleotides)} {len(self.strands)} \n")
 
-        
