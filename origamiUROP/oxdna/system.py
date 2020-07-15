@@ -22,9 +22,9 @@ def oxDNA_string(dataframe : pd.DataFrame) -> str:
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
     output = output.strip()
     output = output.replace('\n ','\n')
-    output = output.replace('  ', ' ')
     output += '\n'
-    return output
+    output = output.replace('  ', ' ')
+    return output.replace('  ', ' ')
 
 class System:
     """
