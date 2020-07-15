@@ -46,7 +46,6 @@ def main():
     for j in range(0, math.factorial(mesh.shape[0])):
 
         SHAPE3 = SHAPE2[perm[0]]
-        counter = 0
 
         for i in range(1, mesh.shape[0]):
             SHAPE3 = np.vstack((SHAPE3, SHAPE2[perm[i]]))
