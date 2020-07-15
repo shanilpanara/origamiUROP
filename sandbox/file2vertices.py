@@ -1,10 +1,3 @@
-import meshio
-import numpy as np
-from origamiUROP.polygons import make_polygon, BoundaryPolygon
-import itertools
-import math
-from shapely.geometry import LineString
-
 """
 --- Currently doesn't work ---
 It is supposed to:
@@ -16,47 +9,58 @@ does not work for shapes with concave sections (e.g. a star)
 and only for .stl files at the moment
 """
 
-# read file
-mesh = meshio.read("/home/shanil/origamiUROP/polygons/STL/hexagon.stl")
-# output vertices
-mesh = mesh.points
-# use only vertices on the z = 0 plane
-mesh = mesh[mesh[:, 2] == 0]
-
-mesh = np.random.permutation(np.array(mesh))
-
-permutations = itertools.permutations(range(0, mesh.shape[0]))
-
-SHAPE = BoundaryPolygon(mesh)
-SHAPE2 = SHAPE
-SHAPE2 = np.vstack((SHAPE.vertices, SHAPE.vertices))
-
-# make_polygon(mesh)
-
-print(f"mesh shape is {mesh.shape[0]} \n and SHAPE2 is {SHAPE2}")
+import meshio
+import numpy as np
+from origamiUROP.polygons import make_polygon, BoundaryPolygon
+import itertools
+import math
+from shapely.geometry import LineString
 
 
-def shapeIsSimple(SHAPE3):
-    # make_polygon(SHAPE3)
-    return LineString(SHAPE3).is_simple
+def main():
+    # read file
+    mesh = meshio.read("/home/shanil/origamiUROP/polygons/STL/hexagon.stl")
+    # output vertices
+    mesh = mesh.points
+    # use only vertices on the z = 0 plane
+    mesh = mesh[mesh[:, 2] == 0]
 
+    mesh = np.random.permutation(np.array(mesh))
 
-perm = next(permutations)
+    permutations = itertools.permutations(range(0, mesh.shape[0]))
 
-for j in range(0, math.factorial(mesh.shape[0])):
+    SHAPE = BoundaryPolygon(mesh)
+    SHAPE2 = SHAPE
+    SHAPE2 = np.vstack((SHAPE.vertices, SHAPE.vertices))
 
-    SHAPE3 = SHAPE2[perm[0]]
-    counter = 0
+    # make_polygon(mesh)
 
-    for i in range(1, mesh.shape[0]):
-        SHAPE3 = np.vstack((SHAPE3, SHAPE2[perm[i]]))
+    print(f"mesh shape is {mesh.shape[0]} \n and SHAPE2 is {SHAPE2}")
 
-    if shapeIsSimple(SHAPE3):  # no intersections
-        print(f"Finally \n Updated orientation: {SHAPE3}")
-        break
+    def shapeIsSimple(SHAPE3):
+        # make_polygon(SHAPE3)
+        return LineString(SHAPE3).is_simple
 
     perm = next(permutations)
 
-print(f"Permutation: {perm}")
+    for j in range(0, math.factorial(mesh.shape[0])):
 
-make_polygon(SHAPE3)
+        SHAPE3 = SHAPE2[perm[0]]
+        counter = 0
+
+        for i in range(1, mesh.shape[0]):
+            SHAPE3 = np.vstack((SHAPE3, SHAPE2[perm[i]]))
+
+        if shapeIsSimple(SHAPE3):  # no intersections
+            print(f"Finally \n Updated orientation: {SHAPE3}")
+            break
+
+        perm = next(permutations)
+
+    print(f"Permutation: {perm}")
+
+    make_polygon(SHAPE3)
+
+
+if __name__ == "__main__":
+    main()
