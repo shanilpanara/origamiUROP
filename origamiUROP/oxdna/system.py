@@ -1,6 +1,16 @@
 import numpy as np
 
 class System():
+    """
+    Object representing an oxDNA system
+    Contains strands
+    Arguments:
+    box -- the box size of the system
+        Ex: box = [50, 50, 50]
+    time --- Time of the system
+    E_pot --- Potential energy
+    E_kin --- Kinetic energy
+    """
     def __init__(
         self, 
         box : np.ndarray,
