@@ -10,7 +10,7 @@ class Nucleotide():
         L : np.ndarray = np.array([0., 0., 0.])
     ):
         self.cm_pos = cm_pos
-        self.a1 = a1
-        self.a3 = a3
-        self.v = v
-        self.L = L
+        self._a1 = a1
+        self._a3 = a3
+        self._v = v
+        self._L = L
