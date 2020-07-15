@@ -1,5 +1,8 @@
 import numpy as np
+import pandas as pd
 
+CONFIGURATION_COLUMNS = ['position', 'a1', 'a3', 'v', 'L']
+TOPOLOGY_COLUMNS = ['base', 'strand', '3p', '5p']
 
 class System:
     """
@@ -24,6 +27,9 @@ class System:
 
         self._strands = []
 
+    def __repr__(self) -> str:
+        return f"oxDNASystem[strands: {len(self._strands)}, nucleotides: {len(self.nucleotides)}]"
+
     @property
     def E_tot(self):
         return self.E_pot + self.E_kin
@@ -41,6 +47,18 @@ class System:
             result += strand._nucleotides
         return result
 
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        return pd.concat([i.dataframe for i in self.strands])
+
+    @property
+    def configuration(self) -> pd.DataFrame:
+        return self.dataframe[CONFIGURATION_COLUMNS]
+
+    @property
+    def topology(self) -> pd.DataFrame:
+        return self.dataframe[TOPOLOGY_COLUMNS]
+
     def write_oxDNA(self, prefix: str = "out"):
         """
         Writes two files *.conf and *.top for the
@@ -51,7 +69,12 @@ class System:
             f.write(f"t = {self.time}\n")
             f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
+            f.write(self.configuration.to_string(
+                header=False, index=False, justify='left'
+            ))
 
         with open(f'{prefix}.top', 'w') as f:
             f.write(f'{len(self.nucleotides)} {len(self.strands)}\n')
-
+            f.write(self.topology..to_string(
+                header=False, index=False, justify='left'
+            ))
