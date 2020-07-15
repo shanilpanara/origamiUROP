@@ -1,5 +1,9 @@
 import numpy as np
 
+POS_BACK = -0.4
+POS_STACK = 0.34
+POS_BASE = 0.4
+
 
 class Nucleotide:
     def __init__(
