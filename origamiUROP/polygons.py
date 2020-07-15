@@ -139,7 +139,6 @@ class BoundaryPolygon:
         output_string += "\n"
 
         # finished generating file so now writing
-        fout = fout + ".PLY"
         with open(fout, "w") as f:
             f.write(output_string)
 
