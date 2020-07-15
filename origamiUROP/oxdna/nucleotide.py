@@ -8,9 +8,10 @@ POS_BASE = 0.4
 class Nucleotide:
     def __init__(
         self,
-        cm_pos: np.ndarray,
-        a1: np.ndarray,
-        a3: np.ndarray,
+        cm_pos: np.ndarray,  # position of centre of mass (likely inbetween base/backbone)
+        a1: np.ndarray,  # direction of base
+        a3: np.ndarray,  # direction of stacking, normal to base
+        base: str,  # either 'A' 'C' 'T' or 'G'
         v: np.ndarray = np.array([0.0, 0.0, 0.0]),
         L: np.ndarray = np.array([0.0, 0.0, 0.0]),
     ):
@@ -19,6 +20,7 @@ class Nucleotide:
         self._a3 = a3
         self._v = v
         self._L = L
+        self._base = base
 
     @property
     def pos_base(self):
