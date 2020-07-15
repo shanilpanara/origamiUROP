@@ -45,6 +45,6 @@ class System():
             f.write(f'E = {self.E_pot} {self.E_kin} {self.E_tot}\n')
 
         with open(f'{prefix}.top', 'w') as f:
-            f.write(f'{len(self.nucleotides)} {len(self.strands)} {}\n')
+            f.write(f'{len(self.nucleotides)} {len(self.strands)}\n')
 
         
