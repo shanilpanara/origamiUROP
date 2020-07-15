@@ -8,7 +8,7 @@ POS_BASE = 0.4
 
 class Nucleotide:
     """
-    Nucleotides compose Strands
+    A Nucleotide is a single oxDNA particle that forms a DNA strand
 
     Parameters:
         base - 'A', 'T', 'C' or 'G'
@@ -33,18 +33,24 @@ class Nucleotide:
         v : np.ndarray = np.array([0.0, 0.0, 0.0]),
         L : np.ndarray = np.array([0.0, 0.0, 0.0]),
     ):
+        self._base = base
         self.pos_com = pos_com
         self._a1 = a1
         self._a3 = a3
         self._v = v
         self._L = L
-        self._base = base
+        
+        # make sure that the a1 and a3 vectors are orthogonal
+        assert np.dot(self._a1, self._a3) == 0.
 
         # these are accessed when the nucleotide is added
         # to an oxdna.Strand._nucleotides object
-        self._strand_index = -1
+        self._strand = -1
         self._before = -1
         self._after = -1
+
+    def __repr__(self) -> str:
+        return f"Nucleotide[{self._base}]"
 
     @property
     def pos_base(self):
@@ -87,12 +93,12 @@ class Nucleotide:
         be used for writing to file.
         """
         return pd.Series({
+            'base' : self._base,
             'position' : self.pos_com,
             'a1' : self._a1,
             'a3' : self._a3,
             'v' : self._v,
             'L' : self._L,
-            'base' : self._base,
             'strand' : self._strand,
             '3p' : self._before,
             '5p' : self._after

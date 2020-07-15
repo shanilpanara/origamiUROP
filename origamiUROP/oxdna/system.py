@@ -1,8 +1,30 @@
+import re
+
 import numpy as np
 import pandas as pd
 
 CONFIGURATION_COLUMNS = ['position', 'a1', 'a3', 'v', 'L']
 TOPOLOGY_COLUMNS = ['base', 'strand', '3p', '5p']
+
+def oxDNA_string(dataframe : pd.DataFrame) -> str:
+    output = dataframe.to_string(
+        header=False, 
+        index=False, 
+        justify='left',
+        formatters= {
+            'position' : lambda x: [f"{i:.4f}" for i in x],
+            'a1' : lambda x: [f"{i:.4f}" for i in x],
+            'a3' : lambda x: [f"{i:.4f}" for i in x],
+            'v' : lambda x: [f"{i:.4f}" for i in x],
+            'L' : lambda x: [f"{i:.4f}" for i in x],
+        }
+    )
+    output = re.sub(r"\[|\]|\'|\`|\,", "", output)
+    output = output.strip()
+    output = output.replace('\n ','\n')
+    output = output.replace('  ', ' ')
+    output += '\n'
+    return output
 
 class System:
     """
@@ -17,7 +39,11 @@ class System:
     """
 
     def __init__(
-        self, box: np.ndarray, time: int = 0, E_pot: float = 0.0, E_kin: float = 0.0
+        self,
+        box : np.ndarray, 
+        time : int = 0, 
+        E_pot : float = 0.0, 
+        E_kin : float = 0.0
     ):
 
         self.box = box
@@ -36,8 +62,13 @@ class System:
 
     @property
     def strands(self) -> list:
+
+        # used to set Strand._nucleotide_shift
+        shift = 0 
         for i, strand in enumerate(self._strands):
+            strand._nucleotide_shift = shift
             strand.index = i
+            shift += len(strand)
         return self._strands
 
     @property
@@ -69,12 +100,8 @@ class System:
             f.write(f"t = {self.time}\n")
             f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
-            f.write(self.configuration.to_string(
-                header=False, index=False, justify='left'
-            ))
+            f.write(oxDNA_string(self.configuration))
 
         with open(f'{prefix}.top', 'w') as f:
             f.write(f'{len(self.nucleotides)} {len(self.strands)}\n')
-            f.write(self.topology..to_string(
-                header=False, index=False, justify='left'
-            ))
+            f.write(oxDNA_string(self.topology))

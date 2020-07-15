@@ -11,9 +11,10 @@ class Strand:
         self._nucleotides = nucleotides
 
         self.index = -1
+        self._nucleotide_shift = 0
 
     def __repr__(self):
-        return f'3>[{self.index}]>{self.sequence}>>>5'
+        return f'3>[{self.index}]>{self.sequence}>>5'
 
     @property
     def sequence(self) -> str:
@@ -25,9 +26,15 @@ class Strand:
         Returns the list of nucleotides where each nucleotide
         is 
         """
-        for i, nucleotide in self._nucleotides:
-            nucleotide._before = i-1
-            nucleotide._after = i+1
+        for i, nucleotide in enumerate(self._nucleotides):
+            if i == 0:
+                nucleotide._before = -1 
+            else:
+                nucleotide._before = i-1 + self._nucleotide_shift
+            if i == len(self._nucleotides) - 1:
+                nucleotide._after = -1
+            else:
+                nucleotide._after = i+1 + self._nucleotide_shift
             nucleotide._strand_index = self.index
         return self._nucleotides
 
