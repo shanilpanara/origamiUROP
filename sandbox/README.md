@@ -13,3 +13,4 @@ When adding a script to the sandbox, try and do the following:
 ## Scripts
 
 - `empty.py` - contains nothing, acts as a template/placeholder
+- `file2vertices` - contains an algorithm to extract vertices from different file types and make them cyclical, currently does not work
