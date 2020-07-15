@@ -7,10 +7,16 @@ CONFIGURATION_COLUMNS = ['position', 'a1', 'a3', 'v', 'L']
 TOPOLOGY_COLUMNS = ['base', 'strand', '3p', '5p']
 
 def oxDNA_string(dataframe : pd.DataFrame) -> str:
+    """
+    Formats the dataframes needed for writing the topology
+    and configuration dataframes to the appropriate
+    file format
+    """
     output = dataframe.to_string(
         header=False, 
         index=False, 
         justify='left',
+        # format to ensure 4 decimal places
         formatters= {
             'position' : lambda x: [f"{i:.4f}" for i in x],
             'a1' : lambda x: [f"{i:.4f}" for i in x],
@@ -19,23 +25,26 @@ def oxDNA_string(dataframe : pd.DataFrame) -> str:
             'L' : lambda x: [f"{i:.4f}" for i in x],
         }
     )
+    # remove all excess symbols and whitespace
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
     output = output.strip()
     output = output.replace('\n ','\n')
     output += '\n'
+    # not sure why this replace statement is needed twice but
+    # it doesn't work otherwise
     output = output.replace('  ', ' ')
     return output.replace('  ', ' ')
 
 class System:
     """
-    Object representing an oxDNA system
-    Contains strands
-    Arguments:
-    box -- the box size of the system
-        Ex: box = [50, 50, 50]
-    time --- Time of the system
-    E_pot --- Potential energy
-    E_kin --- Kinetic energy
+    oxDNA simulation system, a container for strands which
+    are composed of nucleotides.
+
+    Parameters:
+        box - the box size of the system
+        time - Time of the system
+        E_pot - Potential energy
+        E_kin - Kinetic energy
     """
 
     def __init__(
