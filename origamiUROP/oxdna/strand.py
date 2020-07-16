@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from origamiUROP.oxdna import Nucleotide
+import re
+
 
 class Strand:
     """
@@ -14,11 +17,11 @@ class Strand:
         self._nucleotide_shift = 0
 
     def __repr__(self):
-        return f'3>[{self.index}]>{self.sequence}>>5'
+        return f"3>[{self.index}]>{self.sequence}>>5"
 
     @property
     def sequence(self) -> str:
-        return ''.join([i._base for i in self._nucleotides])
+        return "".join([i._base for i in self._nucleotides])
 
     @property
     def nucleotides(self) -> list:
@@ -28,13 +31,13 @@ class Strand:
         """
         for i, nucleotide in enumerate(self._nucleotides):
             if i == 0:
-                nucleotide._before = -1 
+                nucleotide._before = -1
             else:
-                nucleotide._before = i-1 + self._nucleotide_shift
+                nucleotide._before = i - 1 + self._nucleotide_shift
             if i == len(self._nucleotides) - 1:
                 nucleotide._after = -1
             else:
-                nucleotide._after = i+1 + self._nucleotide_shift
+                nucleotide._after = i + 1 + self._nucleotide_shift
             nucleotide._strand_index = self.index
         return self._nucleotides
 
@@ -45,27 +48,20 @@ class Strand:
         the information for both the configuration and
         topology files.
         """
-        result = pd.DataFrame(
-            [i.series for i in self.nucleotides]
-        )
+        result = pd.DataFrame([i.series for i in self.nucleotides])
         return result
 
     def __len__(self) -> int:
         return len(self._nucleotides)
 
+    @sequence.setter
+    def sequence(self, seq: str):
+        seq = seq.upper()
+        # sorry this doesn't look the prettiest, but it's the autoformatting
+        assert len(seq) <= len(
+            self._nucleotides
+        ), f"Sequence length must = strand length {len(self._nucleotides)}"
+        assert not re.findall("[^ACGT]", seq), "Sequence can only contain A, G, C or T"
 
-    ## this is useful but we will probably change this (also we will use a property setter decorator)
-    def set_sequence(self, seq: str):  # enforcing we don't use numbers, just letters :)
-        if len(seq) != len(self._nucleotides):
-            print("error, seq not the same length as no. of nucleotides")
-        self._sequence = seq
-
-    ## this isn't needed
-    @property
-    def list_sequence(self) -> list:
-        return self._sequence
-
-    ## this has be implemented as @property\\def sequence(self)
-    @property
-    def str_sequence(self) -> str:
-        return "".join(self._sequence)
+        for i, base in enumerate(seq):
+            self._nucleotides[i]._base = base
