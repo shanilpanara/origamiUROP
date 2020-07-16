@@ -2,38 +2,41 @@ import re
 
 import numpy as np
 import pandas as pd
+from origamiUROP.oxdna import Strand, Nucleotide
 
-CONFIGURATION_COLUMNS = ['position', 'a1', 'a3', 'v', 'L']
-TOPOLOGY_COLUMNS = ['base', 'strand', '3p', '5p']
+CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
+TOPOLOGY_COLUMNS = ["base", "strand", "3p", "5p"]
 
-def oxDNA_string(dataframe : pd.DataFrame) -> str:
+
+def oxDNA_string(dataframe: pd.DataFrame) -> str:
     """
     Formats the dataframes needed for writing the topology
     and configuration dataframes to the appropriate
     file format
     """
     output = dataframe.to_string(
-        header=False, 
-        index=False, 
-        justify='left',
+        header=False,
+        index=False,
+        justify="left",
         # format to ensure 4 decimal places
-        formatters= {
-            'position' : lambda x: [f"{i:.4f}" for i in x],
-            'a1' : lambda x: [f"{i:.4f}" for i in x],
-            'a3' : lambda x: [f"{i:.4f}" for i in x],
-            'v' : lambda x: [f"{i:.4f}" for i in x],
-            'L' : lambda x: [f"{i:.4f}" for i in x],
-        }
+        formatters={
+            "position": lambda x: [f"{i:.4f}" for i in x],
+            "a1": lambda x: [f"{i:.4f}" for i in x],
+            "a3": lambda x: [f"{i:.4f}" for i in x],
+            "v": lambda x: [f"{i:.4f}" for i in x],
+            "L": lambda x: [f"{i:.4f}" for i in x],
+        },
     )
     # remove all excess symbols and whitespace
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
     output = output.strip()
-    output = output.replace('\n ','\n')
-    output += '\n'
+    output = output.replace("\n ", "\n")
+    output += "\n"
     # not sure why this replace statement is needed twice but
     # it doesn't work otherwise
-    output = output.replace('  ', ' ')
-    return output.replace('  ', ' ')
+    output = output.replace("  ", " ")
+    return output.replace("  ", " ")
+
 
 class System:
     """
@@ -48,11 +51,7 @@ class System:
     """
 
     def __init__(
-        self,
-        box : np.ndarray, 
-        time : int = 0, 
-        E_pot : float = 0.0, 
-        E_kin : float = 0.0
+        self, box: np.ndarray, time: int = 0, E_pot: float = 0.0, E_kin: float = 0.0
     ):
 
         self.box = box
@@ -73,7 +72,7 @@ class System:
     def strands(self) -> list:
 
         # used to set Strand._nucleotide_shift
-        shift = 0 
+        shift = 0
         for i, strand in enumerate(self._strands):
             strand._nucleotide_shift = shift
             strand.index = i
@@ -111,6 +110,27 @@ class System:
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
             f.write(oxDNA_string(self.configuration))
 
-        with open(f'oxnda.{prefix}.top', 'w') as f:
-            f.write(f'{len(self.nucleotides)} {len(self.strands)}\n')
+        with open(f"oxnda.{prefix}.top", "w") as f:
+            f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
+
+    def add_strand(self, addition: Strand or list, index: int = None):
+        if index == None or index > len(self._strands):
+            index = len(self._strands)  # add strands to end
+        elif isinstance(index, int):
+            pass
+        else:
+            raise TypeError("Index must be an integer!")
+
+        if not isinstance(addition, (Strand, list)):
+            raise TypeError("Added Strands must be a Strand objects!")
+
+        if isinstance(addition, Strand):
+            self._strands.insert(index, addition)
+
+        elif isinstance(addition[0], Strand):  # list items must be Strand objects
+            for i in range(len(addition)):
+                self._strands.insert(index + i, addition[i])
+
+        else:
+            raise TypeError("Added Strands must be a Strand objects!")
