@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from origamiUROP.oxdna import Nucleotide
 import re
+from copy import deepcopy
 
 
 class Strand:
@@ -13,7 +14,7 @@ class Strand:
     def __init__(self, nucleotides: list = []):
         self._nucleotides = nucleotides
 
-        self.index = -1
+        self.index = 1
         self._nucleotide_shift = 0
 
     def __repr__(self):
@@ -57,11 +58,18 @@ class Strand:
     @sequence.setter
     def sequence(self, seq: str):
         seq = seq.upper()
-        # sorry this doesn't look the prettiest, but it's the autoformatting
-        assert len(seq) <= len(
-            self._nucleotides
-        ), f"Sequence length must = strand length {len(self._nucleotides)}"
-        assert not re.findall("[^ACGT]", seq), "Sequence can only contain A, G, C or T"
+        if len(seq) > len(self._nucleotides):
+            raise ValueError(
+                f"Sequence length must = strand length {len(self._nucleotides)}"
+            )
+        if re.findall("[^ACGT]", seq):
+            raise ValueError("Sequence can only contain A, G, C or T")
 
         for i, base in enumerate(seq):
             self._nucleotides[i]._base = base
+
+    # When a strand is added using add_strand in system.py
+    # We create a new object, so the strand is not accessible
+    # from anywhere other than the system
+    def copy(self):
+        return deepcopy(Strand(self._nucleotides))
