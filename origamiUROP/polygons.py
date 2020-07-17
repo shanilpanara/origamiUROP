@@ -95,8 +95,8 @@ class BoundaryPolygon:
     def z(self) -> np.ndarray:
         try:
             return self.vertices[:, 2]
-        except IndexError as err:
-            raise err(f"Trying to access Polygon.z but {self} is only 2D!")
+        except IndexError:
+            raise IndexError(f"Trying to access Polygon.z but {self} is only 2D!")
 
     def __repr__(self) -> str:
         return f"<Polygon{self.vertices.shape[1]}D Vertices[{self.vertices.shape[0]}]>"

@@ -6,6 +6,7 @@ POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
 
+
 class Nucleotide:
     """
     A Nucleotide is a single oxDNA particle that forms a DNA strand
@@ -26,12 +27,12 @@ class Nucleotide:
 
     def __init__(
         self,
-        base : str,
-        pos_com : np.ndarray,
-        a1 : np.ndarray,
-        a3 : np.ndarray,
-        v : np.ndarray = np.array([0.0, 0.0, 0.0]),
-        L : np.ndarray = np.array([0.0, 0.0, 0.0]),
+        base: str,
+        pos_com: np.ndarray,
+        a1: np.ndarray,
+        a3: np.ndarray,
+        v: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        L: np.ndarray = np.array([0.0, 0.0, 0.0]),
     ):
         self._base = base
         self.pos_com = pos_com
@@ -39,13 +40,13 @@ class Nucleotide:
         self._a3 = a3
         self._v = v
         self._L = L
-        
+
         # make sure that the a1 and a3 vectors are orthogonal
-        assert np.dot(self._a1, self._a3) == 0.
+        assert np.dot(self._a1, self._a3) == 0.0
 
         # these are accessed when the nucleotide is added
         # to an oxdna.Strand._nucleotides object
-        self._strand = -1
+        self._strand_index = 1
         self._before = -1
         self._after = -1
 
@@ -92,15 +93,17 @@ class Nucleotide:
         needed for writing a row in pd.DataFrame that will
         be used for writing to file.
         """
-        return pd.Series({
-            'base' : self._base,
-            'position' : self.pos_com,
-            'a1' : self._a1,
-            'a3' : self._a3,
-            'v' : self._v,
-            'L' : self._L,
-            'strand' : self._strand,
-            '3p' : self._before,
-            '5p' : self._after
-        })
+        return pd.Series(
+            {
+                "base": self._base,
+                "position": self.pos_com,
+                "a1": self._a1,
+                "a3": self._a3,
+                "v": self._v,
+                "L": self._L,
+                "strand": self._strand_index,
+                "3p": self._before,
+                "5p": self._after,
+            }
+        )
 
