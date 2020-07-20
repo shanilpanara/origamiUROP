@@ -6,6 +6,9 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
+from origamiUROP.oxdna.generate_helix import generateHelix
+from origamiUROP.oxdna import Nucleotide, Strand, System
+
 # class Vertex:
 #     """
 #     A Vertex is a point in space that is connected to other vertices
@@ -29,15 +32,12 @@ class Edge:
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
-    def __init__(self, vertex_1: list, vertex_2: list, edge_type: int = 0):
+    def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
         self.vertices = np.array([vertex_1, vertex_2])
-
+        self.x1 = np.array([vertex_1])
+        self.x2 = np.array([vertex_2])
         # don't use type because that's a protected function in Python
-        self.kind = EDGE_TYPE[edge_type]
-
-        # these belong to individual nucleotides not the whole edge
-        # self.linear_velocity = 0
-        # self.angular_velocity = 0
+        self.kind = EDGE_TYPE[edge_kind]
 
     @property
     def length(self):
@@ -50,6 +50,32 @@ class Edge:
     @property
     def unit_vector(self) -> np.ndarray:
         return self.vector / (self.vector ** 2).sum() ** 0.5
+
+    @property
+    def perp_vector(self) -> np.ndarray:
+        """Perpendicular vector which lies in the xy plane"""
+        return np.cross(self.unit_vector, np.array([0, 0, 1]))
+
+    @property
+    def system(self) -> System:
+        no_of_nucleotides_in_edge = int(self.length)
+        system = System(np.array([50.0, 50.0, 50.0]))
+        new_strand = generateHelix(
+            BP=no_of_nucleotides_in_edge,
+            start_pos=self.x1,
+            back_orient_a1=self.perp_vector,
+            base_orient_a3=self.unit_vector,
+        )
+        system.add_strand(new_strand)
+        return system
+
+    @property
+    def strand(self) -> Strand:
+        return self.system.strands[0]
+
+    @property
+    def nucleotides(self) -> list:
+        return self.strand._nucleotides
 
 
 def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
