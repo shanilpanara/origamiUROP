@@ -85,7 +85,7 @@ def test_System():
             ),
         ]
     )
-    system._strands += [strand_1, strand_2]
+    system.add_strands([strand_1, strand_2])
 
     assert isinstance(system, System)
 
@@ -110,10 +110,14 @@ def test_System():
     strand_3.sequence = "CCCGGG"
     strand_4 = strand_3.copy()
     strand_4.sequence = "AAATTT"
-    system.add_strand([strand_3, strand_4], 0)
+    system.add_strands({
+        0 : strand_3, 
+        1 : strand_4
+    })
 
     assert len(system.strands) == 5
     assert len(system.nucleotides) == 30
+    print(system.strands)
     assert system.strands[0].sequence == "CCCGGG"
     assert system.strands[1].sequence == "AAATTT"
     assert system.strands[2].sequence == "TATATA"

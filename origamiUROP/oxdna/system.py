@@ -1,4 +1,9 @@
+"""
+oxDNA system class - contains tools to manage, read and write
+oxDNA simulation configurations.
+"""
 import re
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -73,7 +78,7 @@ class System:
         shift = 0
         for i, strand in enumerate(self._strands):
             strand._nucleotide_shift = shift
-            strand.index = i + 1
+            strand.index = i
             shift += len(strand)
         return self._strands
 
@@ -98,9 +103,12 @@ class System:
 
     def write_oxDNA(self, prefix: str = "out"):
         """
-        Writes two files *.conf and *.top for the
+        Writes two files oxdna.*.conf and oxdna.*.top for the
         configuration file and topology file required
         to run a simulation using oxDNA
+
+        Parameters:
+            prefix (default='out') : prefix to output files
         """
         with open(f"oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
@@ -112,35 +120,62 @@ class System:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
-    def add_strand(self, addition: Strand or list, index: int = None):
+    def add_strand(self, addition: Strand, index: int = None):
         """
         Method to add strand(s) to the system
 
         Parameters:
             addition - accepted as Strand objects or a List of Strands
-            index (default = Strand(s) append to current system)
-            - otherwise strands inserted at locations given
+            index (default = None) - Strand will append to current system,
+            otherwise Strand inserted at location given
                 
         """
-        # Determine whether to add to end or at a certain index (must be integer value)
-        if index == None or index > len(self._strands):
-            index = len(self._strands)  # add strands to end
-        elif isinstance(index, int):
-            pass  # index = index
+
+        try:
+            assert isinstance(addition, Strand)
+        except TypeError as err:
+            raise err(f'addition must be Strand but is {type(addition)}')
+
+        try:
+            if index == None:
+                self._strands.append(addition.copy())
+            else:
+                self._strands.insert(index, addition.copy())
+        except TypeError as err:
+            raise err('Index must an an integer')
+
+    def add_strands(
+            self, 
+            strand_obj : (list or dict) = None, 
+            index : int = None
+        ):
+        """
+        Add multiple strands to the system. Use a list of strands with
+        an index indicating where they start, or a dictionary where
+        the key is an integer and the value is a strand. 
+        
+        strand_lists are added in reverse order 
+        to preserve original list order
+
+        strand_dicts are added in normal order
+        to preserve dictionary keys
+
+        Parameters:
+            - strand_obj (None) : list or dict of strands
+            - index (None) : index to start adding list
+        """            
+        if isinstance(strand_obj, list):
+            for strand in strand_obj[::-1]:
+                self.add_strand(strand, index)
+        
+        elif isinstance(strand_obj, dict):
+            for index, strand in sorted(
+                    strand_obj.items()
+                ):
+                self.add_strand(strand, index)
+
         else:
-            raise TypeError("Index must be an integer!")
-
-        if not isinstance(addition, (Strand, list)):
-            raise TypeError("Added Strands must be a Strand objects!")
-        if isinstance(addition, Strand):
-            self._strands.insert(index, addition.copy())
-        elif isinstance(addition[0], Strand):  # list items must be Strand objects
-            for i in range(len(addition)):
-                self._strands.insert(index + i, addition[i].copy())
-
-        else:
-            raise TypeError("Added Strands must be a Strand objects!")
-
-        # Update all strand indicies
-        for i in range(len(self._strands)):
-            self._strands[i].index = i
+            raise TypeError(
+                'add_strands() requires ONE of a list or dictionary of strands'
+            )
+        
