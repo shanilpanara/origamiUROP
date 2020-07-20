@@ -1,14 +1,27 @@
+"""
+Storage and Management of oxDNA strands via the Strand
+class
+"""
 import numpy as np
 import pandas as pd
 from origamiUROP.oxdna import Nucleotide
 import re
 from copy import deepcopy
 
-
 class Strand:
     """
     Collection of nucleotides in the 3' -> 5' direction
     Can be added to the system using SystemObject.add_strand
+
+    Parameters:
+        nucleotides ([]) - list of nucleotides to form the strand
+    
+    Attributes/Properties:
+        index - strand_id
+        sequence - string sequence of bases
+        nucleotides - list of Nucleotides
+        dataframe - table of values for top and conf files
+        copy - get a copy of a Strand instance
     """
 
     def __init__(self, nucleotides: list = []):

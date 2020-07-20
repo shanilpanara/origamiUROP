@@ -1,3 +1,6 @@
+"""
+Management and Storage of oxDNA nucleotides
+"""
 import numpy as np
 import pandas as pd
 
@@ -13,13 +16,23 @@ class Nucleotide:
 
     Parameters:
         base - 'A', 'T', 'C' or 'G'
-        cm_pos - Center of mass position vector
+        pos_com - Center of mass position vector
         a1 - Unit vector indicating orientation of backbone with respect to base
         a3 - Unit vector indicating orientation (tilting) of base with respect to backbone
         v - Linear velocity vector
         L - Angular velocity vector
 
     Attributes/Properties:
+        _base - 'A', 'T', 'C' or 'G'
+        _a1 - Unit vector indicating orientation of backbone with respect to base
+        _a3 - Unit vector indicating orientation (tilting) of base with respect to backbone
+        _v - Linear velocity vector
+        _L - Angular velocity vector
+        pos_com - centre of mass
+        pos_back - backbone position
+        pos_base - position of base
+        pos_stack - stacking direction
+        series - table entry for writing conf and top files
 
 
 

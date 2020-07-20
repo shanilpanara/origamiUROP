@@ -1,3 +1,7 @@
+"""
+oxDNA system class - contains tools to manage, read and write
+oxDNA simulation configurations.
+"""
 import re
 from typing import List
 
@@ -99,9 +103,12 @@ class System:
 
     def write_oxDNA(self, prefix: str = "out"):
         """
-        Writes two files *.conf and *.top for the
+        Writes two files oxdna.*.conf and oxdna.*.top for the
         configuration file and topology file required
         to run a simulation using oxDNA
+W
+        Parameters:
+            prefix (default='out') : prefix to output files
         """
         with open(f"oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
@@ -118,8 +125,8 @@ class System:
         Method to add strand(s) to the system
 
         Parameters:
-            addition: accepted as Strand objects or a List of Strands
-            index: will add given Strand(s) to the end if not given,
+            addition - accepted as Strand objects or a List of Strands
+            index (default = None) - will add given Strand(s) to the end if not given,
             otherwise strands inserted at locations given
                 
         """
@@ -143,6 +150,17 @@ class System:
             index : int = None,
             strand_dict : dict = None
         ):
+        """
+        Add multiple strands to the system. Use a list of strands with
+        an index indicating where they start, or a dictionary where
+        the key is an integer and the value is a strand. Strands are
+        added in reverse order to preserve index.
+
+        Parameters:
+            - strand_list (None) : list of strands
+            - index (None) : index to start adding list
+            - strand_dict (None) : dict of strands
+        """
         if not (
                 strand_list or strand_dict
             ) or (
