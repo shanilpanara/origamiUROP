@@ -140,7 +140,3 @@ class System:
 
         else:
             raise TypeError("Added Strands must be a Strand objects!")
-
-        # Update all strand indicies
-        for i in range(len(self._strands)):
-            self._strands[i].index = i
