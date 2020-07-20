@@ -9,7 +9,6 @@ POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
 
-
 class Nucleotide:
     """
     A Nucleotide is a single oxDNA particle that forms a DNA strand
@@ -33,8 +32,6 @@ class Nucleotide:
         pos_base - position of base
         pos_stack - stacking direction
         series - table entry for writing conf and top files
-
-
 
     """
 
