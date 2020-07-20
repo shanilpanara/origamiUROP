@@ -1,4 +1,5 @@
 import re
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -73,7 +74,7 @@ class System:
         shift = 0
         for i, strand in enumerate(self._strands):
             strand._nucleotide_shift = shift
-            strand.index = i + 1
+            strand.index = i
             shift += len(strand)
         return self._strands
 
@@ -112,7 +113,7 @@ class System:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
-    def add_strand(self, addition: Strand or list, index: int = None):
+    def add_strand(self, addition: Strand, index: int = None):
         """
         Method to add strand(s) to the system
 
@@ -122,21 +123,41 @@ class System:
             otherwise strands inserted at locations given
                 
         """
-        # Determine whether to add to end or at a certain index (must be integer value)
-        if index == None or index > len(self._strands):
-            index = len(self._strands)  # add strands to end
-        elif isinstance(index, int):
-            pass  # index = index
-        else:
-            raise TypeError("Index must be an integer!")
 
-        if not isinstance(addition, (Strand, list)):
-            raise TypeError("Added Strands must be a Strand objects!")
-        if isinstance(addition, Strand):
-            self._strands.insert(index, addition.copy())
-        elif isinstance(addition[0], Strand):  # list items must be Strand objects
-            for i in range(len(addition)):
-                self._strands.insert(index + i, addition[i].copy())
+        try:
+            assert isinstance(addition, Strand)
+        except TypeError as err:
+            raise err(f'addition must be Strand but is {type(addition)}')
 
-        else:
-            raise TypeError("Added Strands must be a Strand objects!")
+        try:
+            if index == None:
+                self._strands.append(addition.copy())
+            else:
+                self._strands.insert(index, addition.copy())
+        except TypeError as err:
+            raise err('Index must an an integer')
+
+    def add_strands(
+            self, 
+            strand_list : List[Strand] = None, 
+            index : int = None,
+            strand_dict : dict = None
+        ):
+        if not (
+                strand_list or strand_dict
+            ) or (
+                strand_list and strand_dict
+            ):
+            raise TypeError(
+                'add_strands() requires ONE of a list or dictionary of strands'
+            )
+        if strand_list:
+            for strand in strand_list[::-1]:
+                self.add_strand(strand, index)
+        
+        if strand_dict:
+            for index, strand in enumerate(
+                    sorted(strand_dict.items(), reverse=True)
+                ):
+                self.add_strand(strand, index)
+        
