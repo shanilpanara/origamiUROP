@@ -117,9 +117,9 @@ class System:
         Method to add strand(s) to the system
 
         Parameters:
-            addition: accepted as Strand objects or a List of Strands
-            index: will add given Strand(s) to the end if not given,
-            otherwise strands inserted at locations given
+            addition - accepted as Strand objects or a List of Strands
+            index (default = Strand(s) append to current system)
+            - otherwise strands inserted at locations given
                 
         """
         # Determine whether to add to end or at a certain index (must be integer value)

@@ -42,6 +42,10 @@ class Strand:
             nucleotide._strand_index = self.index
         return self._nucleotides
 
+    def add_nucleotide(self, Nucleotide: Nucleotide):
+        self._nucleotides.append(Nucleotide)
+        print(f"Added nucleotide to the strand, now of length {len(self._nucleotides)}")
+
     @property
     def dataframe(self) -> pd.DataFrame:
         """
