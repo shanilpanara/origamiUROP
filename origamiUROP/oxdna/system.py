@@ -146,36 +146,36 @@ W
 
     def add_strands(
             self, 
-            strand_list : List[Strand] = None, 
-            index : int = None,
-            strand_dict : dict = None
+            strand_obj : (list or dict) = None, 
+            index : int = None
         ):
         """
         Add multiple strands to the system. Use a list of strands with
         an index indicating where they start, or a dictionary where
-        the key is an integer and the value is a strand. Strands are
-        added in reverse order to preserve index.
+        the key is an integer and the value is a strand. 
+        
+        strand_lists are added in reverse order 
+        to preserve original list order
+
+        strand_dicts are added in normal order
+        to preserve dictionary keys
 
         Parameters:
-            - strand_list (None) : list of strands
+            - strand_obj (None) : list or dict of strands
             - index (None) : index to start adding list
-            - strand_dict (None) : dict of strands
-        """
-        if not (
-                strand_list or strand_dict
-            ) or (
-                strand_list and strand_dict
-            ):
+        """            
+        if isinstance(strand_obj, list):
+            for strand in strand_obj[::-1]:
+                self.add_strand(strand, index)
+        
+        elif isinstance(strand_obj, dict):
+            for index, strand in sorted(
+                    strand_obj.items()
+                ):
+                self.add_strand(strand, index)
+
+        else:
             raise TypeError(
                 'add_strands() requires ONE of a list or dictionary of strands'
             )
-        if strand_list:
-            for strand in strand_list[::-1]:
-                self.add_strand(strand, index)
-        
-        if strand_dict:
-            for index, strand in enumerate(
-                    sorted(strand_dict.items(), reverse=True)
-                ):
-                self.add_strand(strand, index)
         

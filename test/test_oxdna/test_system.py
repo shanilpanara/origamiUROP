@@ -110,7 +110,10 @@ def test_System():
     strand_3.sequence = "CCCGGG"
     strand_4 = strand_3.copy()
     strand_4.sequence = "AAATTT"
-    system.add_strands([strand_3, strand_4], 0)
+    system.add_strands({
+        0 : strand_3, 
+        1 : strand_4
+    })
 
     assert len(system.strands) == 5
     assert len(system.nucleotides) == 30
