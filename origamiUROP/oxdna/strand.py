@@ -26,10 +26,12 @@ CM_CENTER_DS = POS_BASE + 0.2
 BASE_BASE = 0.3897628551303122
 
 number_to_base = {0: "A", 1: "G", 2: "C", 3: "T"}
+base_to_number = {"A": 0, "G": 1, "C": 2, "T": 3}
 
 
 def get_rotation_matrix(axis, anglest):
     """
+    Copied from https://github.com/rgatkinson/oxdna/blob/master/UTILS/utils.py 
     The argument anglest can be either an angle in radiants
     (accepted types are float, int or np.float64 or np.float64)
     or a tuple [angle, units] where angle a number and
@@ -174,7 +176,7 @@ def generateHelix(
     ds_start: int = None,
     ds_end: int = None,
     double: bool = False,
-):
+) -> list:
     """
     Generate a strand of DNA around a centerline (a3)
         - ssDNA (default) or dsDNA (double = True)
@@ -183,33 +185,49 @@ def generateHelix(
         Arguments:
         bp --- Integer number of bp/nt (required)
         sequence --- String. Should be same length as bp (default None)
-            Default (None) generates a random sequence.
+            Default (None) generates a random sequence. If sequence shorter
+            than bp given, a random sequence is assigned for the remaining
+            nucleotides
         start_pos --- Location to begin building the strand 
             (default np.array([0.0, 0.0, 0.0]))
-        back_orient_a1 --- Sets a1 unit vector, indicating orientation (tilting) of 
-            base with respect to backbone (default np.array([1.0, 0.0, 0.0]))
-        base_orient_a3 --- a3 unit vector, indicating orientation of backbone with 
-            respect to base (default np.array([0.0, 1.0, 0.0]))
-        initial_rot --- Rotation of first bp in radians (default 0.0)
-        BP_PER_TURN --- Base pairs per complete 2*pi helix turn. (default 10.34)
-        ds_start --- Index (from 0) to begin double stranded region (default None)
-        ds_end --- Index (from 0) to end double stranded region (default None)
-        double --- Generate dsDNA by forming complementary strand in the reverse
-            direction (default False)
+        back_orient_a1 --- Sets a1 unit vector, indicating orientation 
+            (tilting) of base with respect to backbone 
+            (default np.array([1.0, 0.0, 0.0]))
+        base_orient_a3 --- a3 unit vector, indicating orientation of 
+            backbone with respect to base
+            (default np.array([0.0, 1.0, 0.0]))
+        initial_rot --- Rotation of first bp in radians 
+            (default 0.0)
+        BP_PER_TURN --- Base pairs per complete 2*pi helix turn.
+            (default 10.34)
+        ds_start --- Index (from 0) to begin double stranded region
+            (default None)
+        ds_end --- Index (from 0) to end double stranded region 
+            (default None)
+        double --- Generate dsDNA by forming complementary strand in the
+            reverse direction (default False)
         
     """
     # Set Sequence
-    if sequence == None:
+    if sequence is not None:
+        try:
+            assert type(sequence) == str
+        except TypeError:
+            raise TypeError("Sequence must be given as a string")
+        if len(sequence) > bp:
+            n = len(sequence) - bp
+            # print(f"Final {n} bases will not be assigned, seq. too long")
+            sequence_base = sequence
+        elif len(sequence) < bp:
+            n = bp - len(sequence)
+            extra_seq_to_add = np.random.randint(0, 4, n)
+            extra_seq_to_add = "".join(str(number_to_base[x]) for x in extra_seq_to_add)
+            sequence_base = sequence + extra_seq_to_add
+        else:
+            sequence_base = sequence
+    else:
         sequence_numbers = np.random.randint(0, 4, bp)
         sequence_base = [number_to_base[i] for i in sequence_numbers]
-    elif len(sequence) != bp:
-        n = bp - len(sequence)
-        sequence_numbers += np.random.randint(0, 4, n)
-        sequence_base = [number_to_base[i] for i in sequence_numbers]
-    elif type(sequence) != str:
-        sequence_base = [number_to_base[i] for i in sequence]
-    else:
-        sequence_base = sequence
 
     # Ensure vectors are in [1.0,0.0,0.0] format (not [1,0,0])
     dir = base_orient_a3.astype("float64")
@@ -228,29 +246,24 @@ def generateHelix(
     # Add nucleotides in canonical double helix
     new_strand_1 = Strand([])
     for i in range(bp):
-        new_strand_1.add_nucleotide(
-            Nucleotide(sequence_base[i], updated_pos - CM_CENTER_DS * a1, a1, a3,)
-        )
+        new_nt = Nucleotide(sequence_base[i], updated_pos - CM_CENTER_DS * a1, a1, a3,)
+        new_strand_1.add_nucleotide(new_nt)
         if i != bp - 1:
             a1 = np.dot(R, a1)
             updated_pos += a3 * BASE_BASE
 
     if double == True:
         new_strand_2 = Strand()
+        sequence_numbers = [base_to_number[i] for i in sequence_base]
+        reverse_seq_number = [3 - j for j in sequence_numbers]
+        reverse_seq = [number_to_base[k] for k in reverse_seq_number]
         for i in reversed(range(ds_start, ds_end)):
             # Note that the complement strand is built in reverse order
             nt1 = new_strand_1._nucleotides[i]
             a1 = -nt1._a1
             a3 = -nt1._a3
             nt2_pos_com = -(FENE_EPS + 2 * POS_BACK) * a1 + nt1.pos_com
-            reverse_seq_number = [3 - sequence_numbers[j] for j in sequence_numbers]
-            reverse_seq = [number_to_base[k] for k in reverse_seq_number]
             new_strand_2.add_nucleotide(Nucleotide(reverse_seq[i], nt2_pos_com, a1, a3))
         return [new_strand_1, new_strand_2]
     else:
         return [new_strand_1]
-
-
-if __name__ == "__main__":
-    hello = generateHelix(40, double=True)
-

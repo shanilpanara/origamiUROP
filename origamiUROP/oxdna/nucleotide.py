@@ -9,9 +9,11 @@ POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
 
+
 class Nucleotide:
     """
     A Nucleotide is a single oxDNA particle that forms a DNA strand
+    Can be added to a strand using StrandObject.add_nucleotide
 
     Parameters:
         base - 'A', 'T', 'C' or 'G'
