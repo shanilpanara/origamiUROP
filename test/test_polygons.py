@@ -19,8 +19,9 @@ def test_Edge():
     assert np.linalg.norm(edge.vector - np.array([0, 0, -6.5])) == 0.0
     assert np.linalg.norm(edge.unit_vector - np.array([0, 0, -1])) == 0.0
 
-    edge.strand(sequence="AAAGGG")
-    assert edge.helix[0].sequence == "AAAGGG"
+    helix = edge.strand(sequence="AAAGGG")
+    print(helix)
+    assert helix[0].sequence == "AAAGGG"
 
 
 def test_BoundaryPolygon():

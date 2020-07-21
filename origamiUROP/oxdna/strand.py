@@ -28,7 +28,6 @@ BASE_BASE = 0.3897628551303122
 number_to_base = {0: "A", 1: "G", 2: "C", 3: "T"}
 base_to_number = {"A": 0, "G": 1, "C": 2, "T": 3}
 
-
 def get_rotation_matrix(axis, anglest):
     """
     Copied from https://github.com/rgatkinson/oxdna/blob/master/UTILS/utils.py 
@@ -80,7 +79,6 @@ def get_rotation_matrix(axis, anglest):
         ]
     )
 
-
 class Strand:
     """
     Collection of nucleotides in the 3' -> 5' direction
@@ -113,8 +111,9 @@ class Strand:
     @property
     def nucleotides(self) -> list:
         """
-        Returns the list of nucleotides where each nucleotide
-        is 
+        Returns the list of nucleotides, and allocates
+        the strand index to each nucleotide for its 
+        Nucleotide.series property.
         """
         for i, nucleotide in enumerate(self._nucleotides):
             if i == 0:
@@ -128,9 +127,8 @@ class Strand:
             nucleotide._strand_index = self.index
         return self._nucleotides
 
-    def add_nucleotide(self, Nucleotide: Nucleotide):
-        self._nucleotides.append(Nucleotide)
-        # print(f"Added nucleotide to the strand, now of length {len(self._nucleotides)}")
+    def add_nucleotide(self, nucleotide: Nucleotide):
+        self._nucleotides.append(nucleotide)
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -164,19 +162,19 @@ class Strand:
     def copy(self):
         return deepcopy(Strand(self._nucleotides))
 
-
-def generateHelix(
-    bp: int,
-    sequence: str = None,
-    start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
-    back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
-    base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
-    initial_rot: float = 0.0,  # radians
-    BP_PER_TURN: float = 10.34,
-    ds_start: int = None,
-    ds_end: int = None,
-    double: bool = False,
-) -> list:
+def generate_helix(
+        bp: int,
+        sequence: str = None,
+        start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
+        base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
+        initial_rot: float = 0.0,  # radians
+        BP_PER_TURN: float = 10.34,
+        #length: float = None, # draft for future
+        double: bool = False,
+        double_start: int = None,
+        double_end: int = None,
+    ) -> list:
     """
     Generate a strand of DNA around a centerline (a3)
         - ssDNA (default) or dsDNA (double = True)
@@ -208,6 +206,7 @@ def generateHelix(
             reverse direction (default False)
         
     """
+
     # Set Sequence
     if sequence is not None:
         try:
@@ -252,7 +251,7 @@ def generateHelix(
             a1 = np.dot(R, a1)
             updated_pos += a3 * BASE_BASE
 
-    if double == True:
+    if double:
         new_strand_2 = Strand()
         sequence_numbers = [base_to_number[i] for i in sequence_base]
         reverse_seq_number = [3 - j for j in sequence_numbers]

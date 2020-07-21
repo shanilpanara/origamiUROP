@@ -6,7 +6,7 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from origamiUROP.oxdna.strand import Strand, generateHelix
+from origamiUROP.oxdna.strand import Strand, generate_helix
 from origamiUROP.oxdna import Nucleotide, System
 
 # class Vertex:
@@ -34,8 +34,6 @@ class Edge:
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
         self.vertices = np.array([vertex_1, vertex_2])
-        self.x1 = np.array([vertex_1])
-        self.x2 = np.array([vertex_2])
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
@@ -56,17 +54,25 @@ class Edge:
         """Perpendicular vector which lies in the xy plane"""
         return np.cross(self.unit_vector, np.array([0, 0, 1]))
 
-    def strand(self, **kwargs) -> Strand:
-        no_of_nucleotides_in_edge = int(self.length)
-        ssDNA = generateHelix(
+    def strand(self, sequence : str = None, **kwargs) -> Strand:
+        
+        if not sequence:
+            # in future version, this will not be so
+            # straightforward
+            no_of_nucleotides_in_edge = int(self.length)
+
+        else:
+            no_of_nucleotides_in_edge = len(sequence)
+
+        strands = generate_helix(
             bp=no_of_nucleotides_in_edge,
-            start_pos=self.x1,
+            sequence=sequence,
+            start_pos=self.vertices[0],
             back_orient_a1=self.perp_vector,
             base_orient_a3=self.unit_vector,
             **kwargs,
         )
-        self.helix = ssDNA
-        return self.helix
+        return strands
 
 
 def define_edges(vertices_of_polygon, index_1, index_2, edge_type):

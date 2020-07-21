@@ -1,4 +1,4 @@
-from origamiUROP.oxdna.strand import Strand, generateHelix
+from origamiUROP.oxdna.strand import Strand, generate_helix
 from origamiUROP.oxdna.nucleotide import Nucleotide
 import numpy as np
 import pandas as pd
@@ -64,8 +64,8 @@ def test_Strand():
     return
 
 
-def test_generateHelix_ss():
-    ssDNA_helix = generateHelix(40, double=False)
+def test_generate_helix_ss():
+    ssDNA_helix = generate_helix(40, double=False)
 
     assert type(ssDNA_helix) == list
     assert len(ssDNA_helix) == 1
@@ -79,8 +79,8 @@ def test_generateHelix_ss():
     # print(ssDNA_helix[0].dataframe)
 
 
-def test_generateHelix_ds():
-    dsDNA_helix = generateHelix(10, double=True, sequence="AGGGACGATG")
+def test_generate_helix_ds():
+    dsDNA_helix = generate_helix(10, double=True, sequence="AGGGACGATG")
 
     assert type(dsDNA_helix) == list
     assert len(dsDNA_helix) == 2
@@ -93,14 +93,14 @@ def test_generateHelix_ds():
 
 
 def test_generateHelix_seq():
-    ssDNA_with_short_seq = generateHelix(10, sequence="AAA")
+    ssDNA_with_short_seq = generate_helix(10, sequence="AAA")
     strand = ssDNA_with_short_seq[0]
 
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:3] == "AAA"
 
     long_seq = "AGAT" * 5
-    ssDNA_with_long_seq = generateHelix(10, sequence=long_seq)
+    ssDNA_with_long_seq = generate_helix(10, sequence=long_seq)
     strand = ssDNA_with_long_seq[0]
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:11] == long_seq[0:10]
