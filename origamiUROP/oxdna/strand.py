@@ -5,7 +5,7 @@ class
 import numpy as np
 import pandas as pd
 
-from origamiUROP.oxdna import System, Nucleotide
+from origamiUROP.oxdna import Nucleotide
 import re
 from copy import deepcopy
 
@@ -128,7 +128,7 @@ class Strand:
 
     def add_nucleotide(self, Nucleotide: Nucleotide):
         self._nucleotides.append(Nucleotide)
-        print(f"Added nucleotide to the strand, now of length {len(self._nucleotides)}")
+        # print(f"Added nucleotide to the strand, now of length {len(self._nucleotides)}")
 
     @property
     def dataframe(self) -> pd.DataFrame:
