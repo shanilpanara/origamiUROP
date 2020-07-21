@@ -50,7 +50,11 @@ class PointInPolygon2D:
         intersections = 0
         # choose a point outside the bounding box
 
-        # 
+        # create a vector equation of the line
+        # connecting the points
+
+        # use linear algebra to check how many intersections
+        # there are
         return True
 
     def plot(self):
