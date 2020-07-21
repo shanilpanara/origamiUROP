@@ -78,7 +78,8 @@ class System:
         shift = 0
         for i, strand in enumerate(self._strands):
             strand._nucleotide_shift = shift
-            strand.index = i
+            # required for oxDNA .top format
+            strand.index = i + 1
             shift += len(strand)
         return self._strands
 
@@ -106,7 +107,7 @@ class System:
         Writes two files oxdna.*.conf and oxdna.*.top for the
         configuration file and topology file required
         to run a simulation using oxDNA
-W
+
         Parameters:
             prefix (default='out') : prefix to output files
         """
@@ -126,15 +127,15 @@ W
 
         Parameters:
             addition - accepted as Strand objects or a List of Strands
-            index (default = None) - will add given Strand(s) to the end if not given,
-            otherwise strands inserted at locations given
+            index (default = None) - Strand will append to current system,
+            otherwise Strand inserted at location given
                 
         """
 
         try:
             assert isinstance(addition, Strand)
         except TypeError as err:
-            raise err(f'addition must be Strand but is {type(addition)}')
+            raise err(f"addition must be Strand but is {type(addition)}")
 
         try:
             if index == None:
@@ -142,13 +143,9 @@ W
             else:
                 self._strands.insert(index, addition.copy())
         except TypeError as err:
-            raise err('Index must an an integer')
+            raise err("Index must an an integer")
 
-    def add_strands(
-            self, 
-            strand_obj : (list or dict) = None, 
-            index : int = None
-        ):
+    def add_strands(self, strand_obj: (list or dict) = None, index: int = None):
         """
         Add multiple strands to the system. Use a list of strands with
         an index indicating where they start, or a dictionary where
@@ -163,19 +160,17 @@ W
         Parameters:
             - strand_obj (None) : list or dict of strands
             - index (None) : index to start adding list
-        """            
+        """
         if isinstance(strand_obj, list):
             for strand in strand_obj[::-1]:
                 self.add_strand(strand, index)
-        
+
         elif isinstance(strand_obj, dict):
-            for index, strand in sorted(
-                    strand_obj.items()
-                ):
+            for index, strand in sorted(strand_obj.items()):
                 self.add_strand(strand, index)
 
         else:
             raise TypeError(
-                'add_strands() requires ONE of a list or dictionary of strands'
+                "add_strands() requires ONE of a list or dictionary of strands"
             )
-        
+
