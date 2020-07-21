@@ -12,7 +12,6 @@ from origamiUROP.oxdna import Strand, Nucleotide
 CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
 TOPOLOGY_COLUMNS = ["strand", "base", "3p", "5p"]
 
-
 def oxDNA_string(dataframe: pd.DataFrame) -> str:
     """
     Formats the dataframes needed for writing the topology
@@ -36,10 +35,10 @@ def oxDNA_string(dataframe: pd.DataFrame) -> str:
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
     output = output.strip()
     output = output.replace("\n ", "\n")
-    output += "\n"
-    # there are a combination of triple & double spaces, hence x2 .replace()
-    return output.replace("   ", " ").replace("  ", " ")
-
+    # there are a combination of triple & double spaces
+    # hence substitute all multi-spaces with one space
+    output = re.sub(r"\s+", " ", output)
+    return output
 
 class System:
     """
@@ -54,7 +53,11 @@ class System:
     """
 
     def __init__(
-        self, box: np.ndarray, time: int = 0, E_pot: float = 0.0, E_kin: float = 0.0
+        self, 
+        box: np.ndarray, 
+        time: int = 0, 
+        E_pot: float = 0.0, 
+        E_kin: float = 0.0
     ):
 
         self.box = box
