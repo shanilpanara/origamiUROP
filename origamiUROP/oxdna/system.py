@@ -78,7 +78,8 @@ class System:
         shift = 0
         for i, strand in enumerate(self._strands):
             strand._nucleotide_shift = shift
-            strand.index = i
+            # required for oxDNA .top format
+            strand.index = i + 1
             shift += len(strand)
         return self._strands
 
