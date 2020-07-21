@@ -6,8 +6,8 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from origamiUROP.oxdna.generate_helix import generateHelix
-from origamiUROP.oxdna import Nucleotide, Strand, System
+from origamiUROP.oxdna.strand import Strand, generateHelix
+from origamiUROP.oxdna import Nucleotide, System
 
 # class Vertex:
 #     """
@@ -56,26 +56,17 @@ class Edge:
         """Perpendicular vector which lies in the xy plane"""
         return np.cross(self.unit_vector, np.array([0, 0, 1]))
 
-    @property
-    def system(self) -> System:
+    def strand(self, **kwargs) -> Strand:
         no_of_nucleotides_in_edge = int(self.length)
-        system = System(np.array([50.0, 50.0, 50.0]))
-        new_strand = generateHelix(
-            BP=no_of_nucleotides_in_edge,
+        ssDNA = generateHelix(
+            bp=no_of_nucleotides_in_edge,
             start_pos=self.x1,
             back_orient_a1=self.perp_vector,
             base_orient_a3=self.unit_vector,
+            **kwargs,
         )
-        system.add_strand(new_strand)
-        return system
-
-    @property
-    def strand(self) -> Strand:
-        return self.system.strands[0]
-
-    @property
-    def nucleotides(self) -> list:
-        return self.strand._nucleotides
+        self.helix = ssDNA
+        return self.helix
 
 
 def define_edges(vertices_of_polygon, index_1, index_2, edge_type):

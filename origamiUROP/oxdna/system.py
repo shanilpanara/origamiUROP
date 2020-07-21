@@ -127,13 +127,8 @@ class System:
 
         Parameters:
             addition - accepted as Strand objects or a List of Strands
-<<<<<<< HEAD
-            index (default = None) - Strand appends to current system,
-            otherwise strand inserted at locations given
-=======
             index (default = None) - Strand will append to current system,
             otherwise Strand inserted at location given
->>>>>>> 7a71273506cb414c0293fa8c155d4ca848a29340
                 
         """
 
