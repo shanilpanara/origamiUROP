@@ -39,6 +39,4 @@ def test_BoundaryPolygon():
 
 if __name__ == "__main__":
     test_Edge()
-    # print(ssDNA)
-    # print(len(ssDNA))
-    # test_BoundaryPolygon()
+    test_BoundaryPolygon()
