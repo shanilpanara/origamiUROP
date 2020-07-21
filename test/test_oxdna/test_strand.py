@@ -64,7 +64,7 @@ def test_Strand():
     return
 
 
-def test_generateHelix():
+def test_generateHelix_ss():
     ssDNA_helix = generateHelix(40, double=False)
 
     assert type(ssDNA_helix) == list
@@ -78,19 +78,37 @@ def test_generateHelix():
     print("ssDNA: \n", ssDNA_helix[0])
     # print(ssDNA_helix[0].dataframe)
 
-    dsDNA_helix = generateHelix(40, double=True)
+
+def test_generateHelix_ds():
+    dsDNA_helix = generateHelix(10, double=True, sequence="AGGGACGATG")
 
     assert type(dsDNA_helix) == list
     assert len(dsDNA_helix) == 2
     assert len(dsDNA_helix[0]) == len(dsDNA_helix[1])
+    assert dsDNA_helix[0].sequence == "AGGGACGATG"
+    # second strand should have reverse polarity, complementary pairs: T/A & C/G
+    assert dsDNA_helix[1].sequence == "CATCGTCCCT"
 
     print("dsDNA: \n", dsDNA_helix[0], "\n", dsDNA_helix[1])
-    # print(dsDNA_helix[0].dataframe)
 
-    return
+
+def test_generateHelix_seq():
+    ssDNA_with_short_seq = generateHelix(10, sequence="AAA")
+    strand = ssDNA_with_short_seq[0]
+
+    assert len(strand.nucleotides) == 10
+    assert strand.sequence[0:3] == "AAA"
+
+    long_seq = "AGAT" * 5
+    ssDNA_with_long_seq = generateHelix(10, sequence=long_seq)
+    strand = ssDNA_with_long_seq[0]
+    assert len(strand.nucleotides) == 10
+    assert strand.sequence[0:11] == long_seq[0:10]
 
 
 if __name__ == "__main__":
 
     test_Strand()
-    test_generateHelix()
+    test_generateHelix_ss()
+    test_generateHelix_ds()
+    test_generateHelix_seq()

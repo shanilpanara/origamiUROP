@@ -7,17 +7,20 @@ from os import path
 import numpy as np
 
 from origamiUROP.polygons import Edge, BoundaryPolygon
+from origamiUROP.oxdna import Strand
 
 ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 
 def test_Edge():
-    edge = Edge(np.array([0.0, 0.0, 1.0]), np.array([0.0, 0.0, -1.0]))
-    assert edge.length == 2
+    edge = Edge(np.array([0.0, 0.0, 1.0]), np.array([0.0, 0.0, -5.5]))
+    assert edge.length == 6.5
     assert edge.kind == "boundary"
-    assert np.linalg.norm(edge.vector - np.array([0, 0, -2])) == 0.0
+    assert np.linalg.norm(edge.vector - np.array([0, 0, -6.5])) == 0.0
     assert np.linalg.norm(edge.unit_vector - np.array([0, 0, -1])) == 0.0
-    return edge
+
+    edge.strand(sequence="AAAGGG")
+    assert edge.helix[0].sequence == "AAAGGG"
 
 
 def test_BoundaryPolygon():
@@ -36,4 +39,6 @@ def test_BoundaryPolygon():
 
 if __name__ == "__main__":
     test_Edge()
-    test_BoundaryPolygon()
+    # print(ssDNA)
+    # print(len(ssDNA))
+    # test_BoundaryPolygon()
