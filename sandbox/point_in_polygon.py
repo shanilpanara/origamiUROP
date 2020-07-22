@@ -31,6 +31,7 @@ class PointInPolygon2D:
         self.polygon = np.concatenate([polygon_array, np.array([polygon_array[0, :]])], axis=0)
         self.lattice = lattice
         self.obj = BoundaryPolygon(polygon_array)
+        _ = self.inside
 
     @property
     def box(self):
@@ -53,6 +54,7 @@ class PointInPolygon2D:
     @property
     def inside(self):
         inside = []
+        new_lattice =  []
         for i, point in enumerate(self.lattice):
             if not self.in_box(point):
                 inside.append(False)
@@ -60,6 +62,8 @@ class PointInPolygon2D:
 
             polygon = geometry.Polygon(self.polygon)
             inside.append(polygon.contains(geometry.Point(point)))
+            new_lattice.append(point)
+        self.lattice = new_lattice
         return inside
         
 
@@ -120,10 +124,12 @@ def generate_lattice(image_shape, lattice_vectors) :
     return out
 
 def main(**kwargs):
-    lattice = generate_lattice((2, 2), np.array([
-        [0.1, 0.],
-        [0., 0.1]
-    ]))
+    lattice = generate_lattice(
+        (4, 4), 
+        np.array([
+            [0.1, 0.],
+            [0., 0.1]
+        ])) - 2.
     obj = PointInPolygon2D(
         pentagon(5), 
         lattice)
