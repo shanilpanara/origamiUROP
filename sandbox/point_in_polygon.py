@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from origamiUROP.polygons import Polygon
+
 def square(L : int) -> np.ndarray:
     return np.array([
         [0., 0.],
@@ -22,6 +24,7 @@ class PointInPolygon2D:
     def __init__(self, polygon_array, point, gridsize=0.1):
         self.polygon = np.concatenate([polygon_array, np.array([polygon_array[0, :]])], axis=0)
         self.point = point
+        self.obj = Polygon(polygon_array)
 
     @property
     def box(self):
@@ -48,10 +51,22 @@ class PointInPolygon2D:
             return False
         # do ray casting
         intersections = 0
-        # choose a point outside the bounding box
+
+        # choose a point outside the bounding box - keep it simple,
+        # use the y-axis of the point
+        start = np.array([
+            self.box[0], # start from LHS of box
+            self.point[1] # stay on y=A axis
+        ])
 
         # create a vector equation of the line
         # connecting the points
+        vector = np.array([
+            self.box[0] - self.point[0], 
+            0.
+        ])
+
+        # equation = start + lambda * vector
 
         # use linear algebra to check how many intersections
         # there are
