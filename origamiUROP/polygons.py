@@ -37,6 +37,11 @@ class Edge:
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
+        if vertex_1[2] != vertex_2[2]:
+            raise ValueError("Edge must lie in the xy plane (z values must be equal)")
+        elif (vertex_1 == vertex_2).all():
+            raise ValueError("Given verticies must be different")
+
     @property
     def length(self):
         return np.linalg.norm(self.vertices[1] - self.vertices[0])
@@ -54,8 +59,8 @@ class Edge:
         """Perpendicular vector which lies in the xy plane"""
         return np.cross(self.unit_vector, np.array([0, 0, 1]))
 
-    def strand(self, sequence : str = None, **kwargs) -> Strand:
-        
+    def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
+
         if not sequence:
             # in future version, this will not be so
             # straightforward
