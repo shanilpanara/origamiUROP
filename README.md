@@ -2,7 +2,7 @@
 # `origamiUROP`
 
 **Autonomous generation of DNA Origami nanostructures**  
-[![Build Status](https://travis-ci.com/debeshmandal/hydrogels.svg?branch=master)](https://travis-ci.com/debeshmandal/hydrogels)
+[![Build Status](https://travis-ci.com/shanilpanara/origamiUROP.svg?branch=master)](https://travis-ci.com/shanilpanara/origamiUROP)
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/shanilpanara/origamiUROP?color=blue)](https://github.com/shanilpanara/origamiUROP/commits/master)
 [![GitHub Issues](https://img.shields.io/github/issues/shanilpanara/origamiUROP?color=red)](https://github.com/shanilpanara/origamiUROP/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/shanilpanara/origamiUROP?color=purple)](https://github.com/shanilpanara/origamiUROP/pulls)
