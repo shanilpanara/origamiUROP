@@ -92,7 +92,7 @@ def test_generate_helix_ds():
     print("dsDNA: \n", dsDNA_helix[0], "\n", dsDNA_helix[1])
 
 
-def test_generateHelix_seq():
+def test_generate_helix_seq():
     ssDNA_with_short_seq = generate_helix(10, sequence="AAA")
     strand = ssDNA_with_short_seq[0]
 
@@ -109,6 +109,6 @@ def test_generateHelix_seq():
 if __name__ == "__main__":
 
     test_Strand()
-    test_generateHelix_ss()
-    test_generateHelix_ds()
-    test_generateHelix_seq()
+    test_generate_helix_ss()
+    test_generate_helix_ds()
+    test_generate_helix_seq()
