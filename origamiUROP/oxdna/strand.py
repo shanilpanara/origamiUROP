@@ -4,7 +4,7 @@ class
 """
 import numpy as np
 import pandas as pd
-
+from typing import List
 from origamiUROP.oxdna import Nucleotide
 import re
 from copy import deepcopy
@@ -27,6 +27,7 @@ BASE_BASE = 0.3897628551303122
 
 number_to_base = {0: "A", 1: "G", 2: "C", 3: "T"}
 base_to_number = {"A": 0, "G": 1, "C": 2, "T": 3}
+
 
 def get_rotation_matrix(axis, anglest):
     """
@@ -78,6 +79,7 @@ def get_rotation_matrix(axis, anglest):
             [olc * x * z - st * y, olc * y * z + st * x, olc * z * z + ct],
         ]
     )
+
 
 class Strand:
     """
@@ -162,19 +164,20 @@ class Strand:
     def copy(self):
         return deepcopy(Strand(self._nucleotides))
 
+
 def generate_helix(
-        bp: int,
-        sequence: str = None,
-        start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
-        back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
-        base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
-        initial_rot: float = 0.0,  # radians
-        BP_PER_TURN: float = 10.34,
-        #length: float = None, # draft for future
-        double: bool = False,
-        double_start: int = None,
-        double_end: int = None,
-    ) -> list:
+    bp: int,
+    sequence: str = None,
+    start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
+    back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
+    base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
+    initial_rot: float = 0.0,  # radians
+    BP_PER_TURN: float = 10.34,
+    # length: float = None, # draft for future
+    double: bool = False,
+    double_start: int = None,
+    double_end: int = None,
+) -> List[Strand]:
     """
     Generate a strand of DNA around a centerline (a3)
         - ssDNA (default) or dsDNA (double = True)
@@ -214,7 +217,7 @@ def generate_helix(
         except TypeError:
             raise TypeError("Sequence must be given as a string")
         if len(sequence) > bp:
-            n = len(sequence) - bp
+            # n = len(sequence) - bp
             # print(f"Final {n} bases will not be assigned, seq. too long")
             sequence_base = sequence
         elif len(sequence) < bp:
