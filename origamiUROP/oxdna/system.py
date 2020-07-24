@@ -12,6 +12,7 @@ from origamiUROP.oxdna import Strand, Nucleotide
 CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
 TOPOLOGY_COLUMNS = ["strand", "base", "3p", "5p"]
 
+
 def oxDNA_string(dataframe: pd.DataFrame) -> str:
     """
     Formats the dataframes needed for writing the topology
@@ -35,10 +36,12 @@ def oxDNA_string(dataframe: pd.DataFrame) -> str:
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
     output = output.strip()
     output = output.replace("\n ", "\n")
+    output += "\n"
     # there are a combination of triple & double spaces
     # hence substitute all multi-spaces with one space
-    output = re.sub(r"\s+", " ", output)
-    return output
+    # output = re.sub(r"\s+", " ", output) <- did not open in Ovito
+    return output.replace("   ", " ").replace("  ", " ")
+
 
 class System:
     """
@@ -53,11 +56,7 @@ class System:
     """
 
     def __init__(
-        self, 
-        box: np.ndarray, 
-        time: int = 0, 
-        E_pot: float = 0.0, 
-        E_kin: float = 0.0
+        self, box: np.ndarray, time: int = 0, E_pot: float = 0.0, E_kin: float = 0.0
     ):
 
         self.box = box
@@ -137,16 +136,16 @@ class System:
 
         try:
             assert isinstance(addition, Strand)
-        except TypeError as err:
-            raise err(f"addition must be Strand but is {type(addition)}")
+        except TypeError:
+            raise TypeError(f"addition must be Strand but is {type(addition)}")
 
         try:
             if index == None:
                 self._strands.append(addition.copy())
             else:
                 self._strands.insert(index, addition.copy())
-        except TypeError as err:
-            raise err("Index must an an integer")
+        except TypeError:
+            raise TypeError("Index must an an integer")
 
     def add_strands(self, strand_obj: (list or dict) = None, index: int = None):
         """
