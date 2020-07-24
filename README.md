@@ -55,7 +55,7 @@ from origamiUROP.oxdna import Strand, System
 from origamiUROP.polygons import Edge
 import numpy as np
 
-# Create two `Edge` objects, with a length of 6.5 and 14 units, respectively
+# Create two `Edge` objects, with a length of 6.5 and 4 units, respectively
 edge_1 = Edge(np.array([-5.5, 0.0, 0.0]), np.array([1.0, 0.0, 0]))
 edge_2 = Edge(np.array([1.0, 0.0, 0.0]), np.array([15.0, 0.0, 0.0]))
 
@@ -63,17 +63,17 @@ edge_2 = Edge(np.array([1.0, 0.0, 0.0]), np.array([15.0, 0.0, 0.0]))
 # a random sequence will be assigned
 strand_ssDNA = edge_1.strand()
 
-# Create a double stranded DNA object with 14 base pairs and an assigned sequence
+# Create a double stranded DNA object with 4 base pairs and an assigned sequence
 # a complementary sequence will be assigned to the second strand
-strand_dsDNA = edge_2.strand(double=True, sequence="CAAT")
+strand_dsDNA = edge_2.strand(double=True, sequence="CCAAGGTTCAGTCA")
 print("ssDNA: ", strand_ssDNA[0], "\ndsDNA: ", strand_dsDNA[0], strand_dsDNA[1])
 
-# Create system and add strands to it
-system = System(np.array([50.0, 50.0, 50.0]))
+# Create system, add strands and write oxDNA files
+system = System(np.array([20.0, 20.0, 20.0]))
 strands_to_add = strand_ssDNA + strand_dsDNA
 system.add_strands(strands_to_add)
 
-# Creates 2 files oxDNA files -> "oxdna.out.top" & "oxdna.out.conf"
+# Creates 2 files -> oxdna.out.top & oxdna.out.conf
 system.write_oxDNA()
 
 # View pandas dataframe
