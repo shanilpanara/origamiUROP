@@ -18,7 +18,7 @@ The end goal of the package is to **autonomously** generate many possible DNA or
 
 - Generate a polygon, given its verticies, where every edge is individually accessible
 - Write the polygon to `.STL` and `.PLY` file formats
-- Create an oxDNA system with tools to control the length, sequence, base-pairs/nucleotides per \\(2 \pi\\) turn and more.
+- Create an oxDNA system with tools to control the length, sequence, base-pairs/nucleotides per 2π turn and more.
 - Write the oxDNA system to `.conf` and `.top` formats
 
 ### 📆 Upcoming
