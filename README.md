@@ -20,6 +20,7 @@ The end goal of the package is to **autonomously** generate many possible DNA or
 - Write the oxDNA system to a `LAMMPS` configuration file
 - Read in oxDNA `.conf` and `.top` files
 - Read in LAMMPS `dump` files
+- Rasterisation algorithm(s) for autonomous scaffold generation
 
 ## 🔋 Installation
 
