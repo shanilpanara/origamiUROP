@@ -74,7 +74,7 @@ system.write_oxDNA()
 # View pandas dataframe
 system.dataframe
 ```
-![Ovito Visualisation](Example_OvitoVisualisation.png)  
+![Ovito Visualisation](img/Example_OvitoVisualisation.png)  
 *`system` can be visualised using Ovito*
 
 ## 🎉 Acknowledgements
