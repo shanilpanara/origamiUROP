@@ -13,11 +13,11 @@ ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 
 def test_Edge():
-    edge = Edge(np.array([0.0, 0.0, 1.0]), np.array([0.0, 0.0, -5.5]))
+    edge = Edge(np.array([0.0, 1.0, 0.0]), np.array([0.0, -5.5, 0.0]))
     assert edge.length == 6.5
     assert edge.kind == "boundary"
-    assert np.linalg.norm(edge.vector - np.array([0, 0, -6.5])) == 0.0
-    assert np.linalg.norm(edge.unit_vector - np.array([0, 0, -1])) == 0.0
+    assert np.linalg.norm(edge.vector - np.array([0, -6.5, 0.0])) == 0.0
+    assert np.linalg.norm(edge.unit_vector - np.array([0, -1, 0])) == 0.0
 
     helix = edge.strand(sequence="AAAGGG")
     print(helix)
