@@ -34,14 +34,12 @@ def oxDNA_string(dataframe: pd.DataFrame) -> str:
     )
     # remove all excess symbols and whitespace
     output = re.sub(r"\[|\]|\'|\`|\,", "", output)
-    output = output.strip()
-    output = output.replace("\n ", "\n")
-    output += "\n"
     # there are a combination of triple & double spaces
     # hence substitute all multi-spaces with one space
-    # output = re.sub(r"\s+", " ", output) <- did not open in Ovito
-    return output.replace("   ", " ").replace("  ", " ")
-
+    output = re.sub(r" +", " ", output)
+    output = output.strip()
+    output = output.replace("\n ", "\n")
+    return output
 
 class System:
     """
