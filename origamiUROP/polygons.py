@@ -6,6 +6,9 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
+from origamiUROP.oxdna.strand import Strand, generate_helix
+from origamiUROP.oxdna import Nucleotide, System
+
 # class Vertex:
 #     """
 #     A Vertex is a point in space that is connected to other vertices
@@ -29,15 +32,15 @@ class Edge:
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
-    def __init__(self, vertex_1: list, vertex_2: list, edge_type: int = 0):
+    def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
         self.vertices = np.array([vertex_1, vertex_2])
-
         # don't use type because that's a protected function in Python
-        self.kind = EDGE_TYPE[edge_type]
+        self.kind = EDGE_TYPE[edge_kind]
 
-        # these belong to individual nucleotides not the whole edge
-        # self.linear_velocity = 0
-        # self.angular_velocity = 0
+        if vertex_1[2] != vertex_2[2]:
+            raise ValueError("Edge must lie in the xy plane (z values must be equal)")
+        elif (vertex_1 == vertex_2).all():
+            raise ValueError("Given verticies must be different")
 
     @property
     def length(self):
@@ -50,6 +53,31 @@ class Edge:
     @property
     def unit_vector(self) -> np.ndarray:
         return self.vector / (self.vector ** 2).sum() ** 0.5
+
+    @property
+    def perp_vector(self) -> np.ndarray:
+        """Perpendicular vector which lies in the xy plane"""
+        return np.cross(self.unit_vector, np.array([0, 0, 1]))
+
+    def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
+
+        if not sequence:
+            # in future version, this will not be so
+            # straightforward
+            no_of_nucleotides_in_edge = int(self.length)
+
+        else:
+            no_of_nucleotides_in_edge = len(sequence)
+
+        strands = generate_helix(
+            bp=no_of_nucleotides_in_edge,
+            sequence=sequence,
+            start_pos=self.vertices[0],
+            back_orient_a1=self.perp_vector,
+            base_orient_a3=self.unit_vector,
+            **kwargs,
+        )
+        return strands
 
 
 def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
@@ -95,8 +123,8 @@ class BoundaryPolygon:
     def z(self) -> np.ndarray:
         try:
             return self.vertices[:, 2]
-        except IndexError as err:
-            raise err(f"Trying to access Polygon.z but {self} is only 2D!")
+        except IndexError:
+            raise IndexError(f"Trying to access Polygon.z but {self} is only 2D!")
 
     def __repr__(self) -> str:
         return f"<Polygon{self.vertices.shape[1]}D Vertices[{self.vertices.shape[0]}]>"
@@ -139,7 +167,6 @@ class BoundaryPolygon:
         output_string += "\n"
 
         # finished generating file so now writing
-        fout = fout + ".PLY"
         with open(fout, "w") as f:
             f.write(output_string)
 
