@@ -11,6 +11,15 @@ POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
 
+LMP_BASE = {
+    'A' : 1,
+    'C' : 2,
+    'G' : 3,
+    'T' : 4
+}
+LMP_MASS = 3.1575
+LMP_INERTIA = 0.435179
+LMP_SHAPE = 1.1739845031423408
 
 class Nucleotide:
     """
@@ -63,6 +72,7 @@ class Nucleotide:
         self._strand_index = 1
         self._before = -1
         self._after = -1
+        self.index = -1
 
     def __repr__(self) -> str:
         return f"Nucleotide[{self._base}]"
@@ -107,7 +117,7 @@ class Nucleotide:
 
         Taken from https://github.com/lorenzo-rovigatti/tacoxDNA/src/libs/oxDNA_LAMMPS.py
         """
-        result = [1., 0., 0., 0.]
+        result = [0., 0., 0., 0.]
 
         a1, a2, a3 = (self._a1, self._a2, self._a3)
 
@@ -118,24 +128,24 @@ class Nucleotide:
 
         if q0sq >= 0.25:
             result[0] = np.sqrt(q0sq)
-            result[1] = (mya2[2] - mya3[1]) / (4.0 * result[0])
-            result[2] = (mya3[0] - mya1[2]) / (4.0 * result[0])
-            result[3] = (mya1[1] - mya2[0]) / (4.0 * result[0])
+            result[1] = (a2[2] - a3[1]) / (4.0 * result[0])
+            result[2] = (a3[0] - a1[2]) / (4.0 * result[0])
+            result[3] = (a1[1] - a2[0]) / (4.0 * result[0])
         elif q1sq >= 0.25:
             result[1] = np.sqrt(q1sq)
-            result[0] = (mya2[2] - mya3[1]) / (4.0 * result[1])
-            result[2] = (mya2[0] + mya1[1]) / (4.0 * result[1])
-            result[3] = (mya1[2] + mya3[0]) / (4.0 * result[1])
+            result[0] = (a2[2] - a3[1]) / (4.0 * result[1])
+            result[2] = (a2[0] + a1[1]) / (4.0 * result[1])
+            result[3] = (a1[2] + a3[0]) / (4.0 * result[1])
         elif q2sq >= 0.25:
             result[2] = np.sqrt(q2sq)
-            result[0] = (mya3[0] - mya1[2]) / (4.0 * result[2])
-            result[1] = (mya2[0] + mya1[1]) / (4.0 * result[2])
-            result[3] = (mya3[1] + mya2[2]) / (4.0 * result[2])
+            result[0] = (a3[0] - a1[2]) / (4.0 * result[2])
+            result[1] = (a2[0] + a1[1]) / (4.0 * result[2])
+            result[3] = (a3[1] + a2[2]) / (4.0 * result[2])
         elif q3sq >= 0.25:
             result[3] = np.sqrt(q3sq)
-            result[0] = (mya1[1] - mya2[0]) / (4.0 * result[3])
-            result[1] = (mya3[0] + mya1[2]) / (4.0 * result[3])
-            result[2] = (mya3[1] + mya2[2]) / (4.0 * result[3])
+            result[0] = (a1[1] - a2[0]) / (4.0 * result[3])
+            result[1] = (a3[0] + a1[2]) / (4.0 * result[3])
+            result[2] = (a3[1] + a2[2]) / (4.0 * result[3])
 
         norm = 1.0 / np.sqrt(result[0] * result[0] + result[1] * result[1] + \
                 result[2] * result[2] + result[3] * result[3])
@@ -143,8 +153,26 @@ class Nucleotide:
         return np.array(result) * norm
 
     @property
-    def lammps(self) -> List[pd.Series]:
-        return 
+    def lammps(self) -> pd.Series:
+        """
+        Returns a list of Series containing the following
+        information needed to write a LAMMPS configuration
+        data file
+        """
+        result = pd.Series({
+            'id' : self.index + 1,
+            'type' : LMP_BASE[self._base.upper()],
+            'position' : self.pos_com,
+            "molecule" : self._strand_index,
+            'flag' : 1,
+            'density' : 1.,
+            'v' : self._v / LMP_MASS,
+            'L' : self._L * LMP_INERTIA,
+            'shape' : [LMP_SHAPE] * 3,
+            'quaternion' : self.quaternion
+        })
+
+        return result
 
     @property
     def series(self) -> pd.Series:

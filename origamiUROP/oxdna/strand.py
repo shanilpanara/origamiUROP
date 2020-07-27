@@ -118,6 +118,7 @@ class Strand:
         Nucleotide.series property.
         """
         for i, nucleotide in enumerate(self._nucleotides):
+            nucleotide.index = i + self._nucleotide_shift
             if i == 0:
                 nucleotide._before = -1
             else:
@@ -140,6 +141,31 @@ class Strand:
         topology files.
         """
         result = pd.DataFrame([i.series for i in self.nucleotides])
+        return result
+
+    @property
+    def bonds(self) -> pd.DataFrame:
+        """
+        Returns a dataframe containing the information needed to write
+        the bonds section of a LAMMPS configuration data file
+        """
+        result = pd.DataFrame({
+            'type' : [1] * len(self.nucleotides),
+            'atom_1' : [i.index + 1 for i in self.nucleotides],
+            'atom_2' : [i._after + 1 for i in self.nucleotides],
+        })
+        result = result[result.atom_1 != 0]
+        result = result[result.atom_2 != 0]
+        return result
+
+    @property
+    def lammps(self) -> List[pd.DataFrame]:
+        """
+        Returns a list of DataFrames containing the following
+        information needed to write a LAMMPS configuration
+        data file
+        """
+        result = pd.DataFrame([i.lammps for i in self.nucleotides])
         return result
 
     def __len__(self) -> int:
