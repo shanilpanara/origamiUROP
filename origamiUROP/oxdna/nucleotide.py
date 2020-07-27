@@ -4,6 +4,8 @@ Management and Storage of oxDNA nucleotides
 import numpy as np
 import pandas as pd
 
+from typing import List
+
 # Emperical oxDNA constants
 POS_BACK = -0.4
 POS_STACK = 0.34
@@ -139,6 +141,10 @@ class Nucleotide:
                 result[2] * result[2] + result[3] * result[3])
 
         return np.array(result) * norm
+
+    @property
+    def lammps(self) -> List[pd.Series]:
+        return 
 
     @property
     def series(self) -> pd.Series:

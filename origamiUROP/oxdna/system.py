@@ -41,6 +41,14 @@ def oxDNA_string(dataframe: pd.DataFrame) -> str:
     output = output.replace("\n ", "\n")
     return output
 
+def lammps_string(dataframe : pd.DataFrame) -> str:
+    """
+    Formats the dataframes needed for writing the
+    lammps dataframe to the appropriate file format.
+    """
+    output = dataframe.to_string()
+    return output
+
 class System:
     """
     oxDNA simulation system, a container for strands which
@@ -70,6 +78,29 @@ class System:
     @property
     def E_tot(self):
         return self.E_pot + self.E_kin
+    
+    @property
+    def bonds(self) -> int:
+        """
+        Returns the total number of bonds in the system,
+        used for writing LAMMPS configuration data files.
+        """
+        return 1
+
+    @property
+    def lammps(self) -> List[pd.DataFrame]:
+        """
+        Returns a list of DataFrames containing the following
+        information needed to write a LAMMPS configuration
+        data file:
+
+            0 - atoms
+            1 - velocities
+            2 - ellipsoids
+            3 - bonds
+            
+        """
+        return [pd.DataFrame()]
 
     @property
     def strands(self) -> list:
@@ -109,7 +140,7 @@ class System:
         to run a simulation using oxDNA
 
         Parameters:
-            prefix (default='out') : prefix to output files
+            prefix ('out') : prefix to output files
         """
         with open(f"oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
@@ -122,7 +153,39 @@ class System:
             f.write(oxDNA_string(self.topology))
 
     def write_LAMMPS_data(self, prefix : str = 'out'):
-        return
+        """
+        Writes lammps.*.conf which is a configuration data
+        file needed to run a lammps simulation.
+        
+        Parameters;
+            prefix ('out') : prefix to output file
+        """
+
+        with open(f"lammps.{prefix}.top", "w") as f:
+            f.write(f"# LAMMPS data file\n")
+            f.write(f'{len(self._nucleotides)} atoms\n')
+            f.write(f'{len(self._nucleotides)} ellipsoids\n')
+            f.write(f'{self.bonds} bonds\n\n')
+            f.write(f'4 atom types\n')
+            f.write(f'1 bond types\n\n')
+            f.write(f'0. {self.box[0]} xlo xhi\n')
+            f.write(f'0. {self.box[1]} ylo yhi\n')
+            f.write(f'0. {self.box[2]} zlo zhi\n\n')
+
+            f.write(f'Masses\n\n')
+            f.write(f'1 3.1575\n')
+            f.write(f'2 3.1575\n')
+            f.write(f'3 3.1575\n')
+            f.write(f'4 3.1575\n\n')
+
+            f.write('Atoms\n\n')
+            f.write(lammps_string(self.lammps[0]))
+            f.write('Velocities\n\n')
+            f.write(lammps_string(self.lammps[1]))
+            f.write('Ellipsoids\n\n')
+            f.write(lammps_string(self.lammps[2]))
+            f.write('Bonds\n\n')
+            f.write(lammps_string(self.lammps[3]))
 
     def add_strand(self, addition: Strand, index: int = None):
         """
