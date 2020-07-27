@@ -98,7 +98,7 @@ class System:
             1 - velocities
             2 - ellipsoids
             3 - bonds
-            
+
         """
         return [pd.DataFrame()]
 
@@ -261,3 +261,4 @@ def read_LAMMPS_data(fname : str) -> System:
     """
     system = System()
     return system
+    
