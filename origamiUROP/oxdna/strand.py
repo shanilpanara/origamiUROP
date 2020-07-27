@@ -108,6 +108,9 @@ class Strand:
 
     @property
     def sequence(self) -> str:
+        if len(self._nucleotides) == 0:
+            return ""
+            
         return "".join([i._base for i in self._nucleotides])
 
     @property
@@ -117,6 +120,9 @@ class Strand:
         the strand index to each nucleotide for its 
         Nucleotide.series property.
         """
+        if len(self._nucleotides) == 0:
+            return []
+
         for i, nucleotide in enumerate(self._nucleotides):
             nucleotide.index = i + self._nucleotide_shift
             if i == 0:
