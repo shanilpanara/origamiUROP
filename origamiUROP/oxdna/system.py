@@ -121,6 +121,9 @@ class System:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
+    def write_LAMMPS_data(self, prefix : str = 'out'):
+        return
+
     def add_strand(self, addition: Strand, index: int = None):
         """
         Method to add strand(s) to the system
@@ -174,3 +177,24 @@ class System:
                 "add_strands() requires ONE of a list or dictionary of strands"
             )
 
+def read_LAMMPS_dump(fname : str) -> System:
+    """
+    Reads a LAMMPS dump file that has been simulated
+    with the oxDNA(2) force field.
+
+    Parameters:
+        fname - filename
+    """
+    system = System()
+    return system
+
+def read_LAMMPS_data(fname : str) -> System:
+    """
+    Reads a LAMMPS configuration data file that can
+    be simulated with the oxDNA(2) force field.
+
+    Parameters:
+        fname - filename
+    """
+    system = System()
+    return system
