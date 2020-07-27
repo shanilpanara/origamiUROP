@@ -281,7 +281,7 @@ def generate_helix(
             updated_pos += a3 * BASE_BASE
 
     if double:
-        new_strand_2 = Strand()
+        new_strand_2 = Strand([])
         sequence_numbers = [base_to_number[i] for i in sequence_base]
         reverse_seq_number = [3 - j for j in sequence_numbers]
         reverse_seq = [number_to_base[k] for k in reverse_seq_number]

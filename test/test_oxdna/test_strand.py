@@ -84,10 +84,11 @@ def test_generate_helix_ds():
 
     assert type(dsDNA_helix) == list
     assert len(dsDNA_helix) == 2
-    assert len(dsDNA_helix[0]) == len(dsDNA_helix[1])
     assert dsDNA_helix[0].sequence == "AGGGACGATG"
     # second strand should have reverse polarity, complementary pairs: T/A & C/G
     assert dsDNA_helix[1].sequence == "CATCGTCCCT"
+    assert len(dsDNA_helix[0]) == len(dsDNA_helix[1])
+    
 
     print("dsDNA: \n", dsDNA_helix[0], "\n", dsDNA_helix[1])
 
