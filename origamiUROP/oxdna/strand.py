@@ -200,12 +200,12 @@ class Strand:
 def generate_helix(
     bp: int,
     sequence: str = None,
+    # length: float = None, # draft for future
     start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
     back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
     base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
     initial_rot: float = 0.0,  # radians
     BP_PER_TURN: float = 10.34,
-    # length: float = None, # draft for future
     double: bool = False,
     double_start: int = None,
     double_end: int = None,
@@ -291,7 +291,7 @@ def generate_helix(
         sequence_numbers = [base_to_number[i] for i in sequence_base]
         reverse_seq_number = [3 - j for j in sequence_numbers]
         reverse_seq = [number_to_base[k] for k in reverse_seq_number]
-        for i in reversed(range(ds_start, ds_end)):
+        for i in reversed(range(double_start, double_end)):
             # Note that the complement strand is built in reverse order
             nt1 = new_strand_1._nucleotides[i]
             a1 = -nt1._a1
