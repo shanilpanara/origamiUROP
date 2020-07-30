@@ -291,7 +291,7 @@ def generate_helix(
         sequence_numbers = [base_to_number[i] for i in sequence_base]
         reverse_seq_number = [3 - j for j in sequence_numbers]
         reverse_seq = [number_to_base[k] for k in reverse_seq_number]
-        for i in reversed(range(double_start, double_end)):
+        for i in reversed(range(ds_start, ds_end)):
             # Note that the complement strand is built in reverse order
             nt1 = new_strand_1._nucleotides[i]
             a1 = -nt1._a1

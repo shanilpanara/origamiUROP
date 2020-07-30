@@ -85,7 +85,7 @@ class DNAEdge:
             no_of_nucleotides_in_edge = int(self.length * 2.45)
 
         else:
-            no_of_nucleotides_in_edge = int(len(sequence) * 2.45)
+            no_of_nucleotides_in_edge = len(sequence)
 
         strands = generate_helix(
             bp=no_of_nucleotides_in_edge,
