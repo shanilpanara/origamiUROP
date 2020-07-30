@@ -4,13 +4,22 @@ import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
 
-class DNANode:
+class DNANode(np.ndarray):
     """
     Abstract class for use with DNAEdge that helps to determine
     angles and vectors needed to generate stable structures.
     """
-    def __init__(self):
-        pass
+    def __new__(cls, *args, **kwargs):
+        return np.ndarray.__new__(cls, (3))
+
+    def __init__(self, position : np.ndarray):
+        self[:] = np.array(position)[:]
+
+    def angle(self):
+        """
+        Returns the angle between two vectors
+        """
+        return
 
 class DNAEdge:
     """
@@ -18,7 +27,7 @@ class DNAEdge:
     instances along a vector.
     """
     def __init__(self, vertex_1 : np.ndarray, vertex_2 : np.ndarray):
-        self.vertices = np.array([vertex_1, vertex_2])
+        self.vertices = [DNANode(vertex_1), DNANode(vertex_2)]
 
     def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
 
