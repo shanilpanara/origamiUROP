@@ -4,30 +4,78 @@ import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
 
+
 class DNANode(np.ndarray):
     """
     Abstract class for use with DNAEdge that helps to determine
     angles and vectors needed to generate stable structures.
     """
     def __new__(cls, *args, **kwargs):
-        return np.ndarray.__new__(cls, (3))
+        return np.ndarray.__new__(cls, (3)) * 0.
 
     def __init__(self, position : np.ndarray):
-        self[:] = np.array(position)[:]
+        self[:] = position[:]
+        self._vector_3p = None
+        self._vector_5p = None
 
-    def angle(self):
+    @property
+    def angle(self) -> float:
         """
-        Returns the angle between two vectors
+        Returns the angle between the two vectors
+        leaving the Node in radians
         """
-        return
+        if self._vector_3p is None:
+            return None
+        if self.vector_5p is None:
+            return None
+
+        return np.arccos(np.dot(-self._vector_3p, self._vector_5p))
+
+    @property
+    def vector_3p(self) -> np.ndarray:
+        """
+        Vector entering/leaving the node from the 3' direction
+
+        vector_3p and vector_5p follow on from each other which
+        means that they cannot start/finish at the same point
+        """
+        return self._vector_3p
+
+    @vector_3p.setter
+    def vector_3p(self, new_vector : np.ndarray):
+        self._vector_3p = new_vector
+
+    @property
+    def vector_5p(self) -> np.ndarray:
+        """
+        Vector leaving/entering the node from the 5' direction
+
+        vector_3p and vector_5p follow on from each other which
+        means that they cannot start/finish at the same point
+        """
+        return self._vector_5p
+
+    @vector_5p.setter
+    def vector_5p(self, new_vector : np.ndarray):
+        self._vector_5p = new_vector
 
 class DNAEdge:
     """
     Abstract class that allows subclasses to generate oxDNA Strand
     instances along a vector.
     """
-    def __init__(self, vertex_1 : np.ndarray, vertex_2 : np.ndarray):
-        self.vertices = (DNANode(vertex_1), DNANode(vertex_2))
+    def __init__(
+            self, 
+            vertex_3p : (np.ndarray or DNANode), 
+            vertex_5p : (np.ndarray or DNANode)
+        ):
+        if not isinstance(vertex_3p, DNANode):
+            vertex_3p = DNANode(vertex_3p)
+        if not isinstance(vertex_5p, DNANode):
+            vertex_5p = DNANode(vertex_5p)
+        self.vertices = (vertex_3p, vertex_5p)
+        self.vertices[0].vector_5p = self.vector
+        self.vertices[1].vector_3p = -self.vector
 
     def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
 
