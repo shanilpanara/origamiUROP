@@ -69,11 +69,11 @@ class DNAEdge:
             vertex_1 : (np.ndarray or DNANode), 
             vertex_2 : (np.ndarray or DNANode)
         ):
-        if not isinstance(vertex_3p, DNANode):
+        if not isinstance(vertex_1, DNANode):
             vertex_1 = DNANode(vertex_1)
-        if not isinstance(vertex_5p, DNANode):
+        if not isinstance(vertex_2, DNANode):
             vertex_2 = DNANode(vertex_2)
-        self.vertices = (vertex_3p, vertex_5p)
+        self.vertices = (vertex_1, vertex_2)
         self.vertices[0].vector_5p = self.vector
         self.vertices[1].vector_3p = -self.vector
 
