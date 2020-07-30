@@ -108,10 +108,10 @@ class Strand:
 
     @property
     def sequence(self) -> str:
-        if len(self._nucleotides) == 0:
+        if len(self.nucleotides) == 0:
             return ""
             
-        return "".join([i._base for i in self._nucleotides])
+        return "".join([i._base for i in self.nucleotides])
 
     @property
     def nucleotides(self) -> list:
