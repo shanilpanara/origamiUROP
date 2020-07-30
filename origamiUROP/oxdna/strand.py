@@ -108,6 +108,9 @@ class Strand:
 
     @property
     def sequence(self) -> str:
+        if len(self._nucleotides) == 0:
+            return ""
+            
         return "".join([i._base for i in self._nucleotides])
 
     @property
@@ -117,7 +120,11 @@ class Strand:
         the strand index to each nucleotide for its 
         Nucleotide.series property.
         """
+        if len(self._nucleotides) == 0:
+            return []
+
         for i, nucleotide in enumerate(self._nucleotides):
+            nucleotide.index = i + self._nucleotide_shift
             if i == 0:
                 nucleotide._before = -1
             else:
@@ -140,6 +147,31 @@ class Strand:
         topology files.
         """
         result = pd.DataFrame([i.series for i in self.nucleotides])
+        return result
+
+    @property
+    def bonds(self) -> pd.DataFrame:
+        """
+        Returns a dataframe containing the information needed to write
+        the bonds section of a LAMMPS configuration data file
+        """
+        result = pd.DataFrame({
+            'type' : [1] * len(self.nucleotides),
+            'atom_1' : [i.index + 1 for i in self.nucleotides],
+            'atom_2' : [i._after + 1 for i in self.nucleotides],
+        })
+        result = result[result.atom_1 != 0]
+        result = result[result.atom_2 != 0]
+        return result
+
+    @property
+    def lammps(self) -> List[pd.DataFrame]:
+        """
+        Returns a list of DataFrames containing the following
+        information needed to write a LAMMPS configuration
+        data file
+        """
+        result = pd.DataFrame([i.lammps for i in self.nucleotides])
         return result
 
     def __len__(self) -> int:
@@ -255,7 +287,7 @@ def generate_helix(
             updated_pos += a3 * BASE_BASE
 
     if double:
-        new_strand_2 = Strand()
+        new_strand_2 = Strand([])
         sequence_numbers = [base_to_number[i] for i in sequence_base]
         reverse_seq_number = [3 - j for j in sequence_numbers]
         reverse_seq = [number_to_base[k] for k in reverse_seq_number]
