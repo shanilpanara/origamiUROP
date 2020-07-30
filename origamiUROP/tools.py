@@ -1,3 +1,7 @@
+from typing import List
+
+import numpy as np
+
 from .oxdna.strand import Strand, generate_helix
 
 class DNANode:
