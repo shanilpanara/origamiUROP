@@ -108,7 +108,8 @@ class System:
         used for writing LAMMPS configuration data files.
         """
         result = pd.concat(i.bonds for i in self.strands)
-        return result
+        result['id'] = [i+1 for i in range(len(result))]
+        return result[['id', 'type', 'atom_1', 'atom_2']]
 
     @property
     def lammps(self) -> List[pd.DataFrame]:
