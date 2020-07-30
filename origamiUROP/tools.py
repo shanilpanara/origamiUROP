@@ -27,7 +27,7 @@ class DNAEdge:
     instances along a vector.
     """
     def __init__(self, vertex_1 : np.ndarray, vertex_2 : np.ndarray):
-        self.vertices = [DNANode(vertex_1), DNANode(vertex_2)]
+        self.vertices = (DNANode(vertex_1), DNANode(vertex_2))
 
     def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
 
