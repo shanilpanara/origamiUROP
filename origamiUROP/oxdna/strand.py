@@ -108,10 +108,10 @@ class Strand:
 
     @property
     def sequence(self) -> str:
-        if len(self._nucleotides) == 0:
+        if len(self.nucleotides) == 0:
             return ""
             
-        return "".join([i._base for i in self._nucleotides])
+        return "".join([i._base for i in self.nucleotides])
 
     @property
     def nucleotides(self) -> list:
@@ -200,12 +200,12 @@ class Strand:
 def generate_helix(
     bp: int,
     sequence: str = None,
+    # length: float = None, # draft for future
     start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
     back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
     base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
     initial_rot: float = 0.0,  # radians
     BP_PER_TURN: float = 10.34,
-    # length: float = None, # draft for future
     double: bool = False,
     double_start: int = None,
     double_end: int = None,
