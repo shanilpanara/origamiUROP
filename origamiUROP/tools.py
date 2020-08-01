@@ -84,11 +84,11 @@ class DNAEdge:
             # in future version, this will not be so straightforward
             no_of_nucleotides_in_edge = self.nt_length
         else:
-            no_of_nucleotides_in_edge = sequence
+            no_of_nucleotides_in_edge = len(sequence)
             if len(sequence) >= self.nt_length:
                 print(
-                    f"The Length of sequence is longer than max no. of nucleotides "
-                    f"which can be contained within this edge, i.e. {self.nt_length} nucleotides"
+                    f"FYI: The Length of `sequence` is longer than the max no. of nucleotides "
+                    f"that can be contained within this edge, i.e. {self.nt_length} nucleotides"
                 )
 
         strands = generate_helix(

@@ -110,7 +110,7 @@ class Strand:
     def sequence(self) -> str:
         if len(self.nucleotides) == 0:
             return ""
-            
+
         return "".join([i._base for i in self.nucleotides])
 
     @property
@@ -155,11 +155,13 @@ class Strand:
         Returns a dataframe containing the information needed to write
         the bonds section of a LAMMPS configuration data file
         """
-        result = pd.DataFrame({
-            'type' : [1] * len(self.nucleotides),
-            'atom_1' : [i.index + 1 for i in self.nucleotides],
-            'atom_2' : [i._after + 1 for i in self.nucleotides],
-        })
+        result = pd.DataFrame(
+            {
+                "type": [1] * len(self.nucleotides),
+                "atom_1": [i.index + 1 for i in self.nucleotides],
+                "atom_2": [i._after + 1 for i in self.nucleotides],
+            }
+        )
         result = result[result.atom_1 != 0]
         result = result[result.atom_2 != 0]
         return result
@@ -243,7 +245,7 @@ def generate_helix(
     """
 
     # Set Sequence
-    if sequence is not None:
+    if sequence:
         try:
             assert type(sequence) == str
         except TypeError:
