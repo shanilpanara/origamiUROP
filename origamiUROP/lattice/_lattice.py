@@ -1,25 +1,18 @@
+from typing import List
+
 import numpy as np
 from shapely.geometry import MultiPoint
 from shapely import geometry
+
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 
 from operator import itemgetter
-from typing import List
 from copy import deepcopy
-
 import itertools
 
 from origamiUROP.lattice import edge, node, route
 from origamiUROP.oxdna.strand import POS_STACK
-
-
-def plot_lattice(lattice):
-    fig, ax = plt.subplots()
-    ax.matshow(lattice)
-    plt.gca().invert_yaxis()
-    plt.xlabel("Width of rows (bp)")
-    plt.ylabel("Rows")
 
 
 def round_to_multiple(n, mo=0.34, decimal_places=2):
@@ -168,20 +161,41 @@ class Lattice:
 
     @property
     def second_adjust_array(self):
-        """Algorithm to straighten out edges of the lattice"""
+        """
+        Algorithm to straighten out edges of the lattice
+        - achieved by shifting each row to begin at a multiple of 16
+        """
         grid = deepcopy(self.adjusted_array)
+
+        # For a given number of rows
+        #   Find starting_location
+        #   Calc Rounded_location
+        #   Change_location = Rounded - starting
+        #   np.roll(grid[row])
+
+        for row in range(np.shape(grid)[0]):
+            if np.sum(grid[row]) == 0:  # to account for padding
+                continue
+            else:
+                starting_location = int(np.argwhere(grid[row])[0])
+                rounded_location = round_to_multiple(starting_location, 16, 0)
+                change_in_location = rounded_location - starting_location
+                grid[row] = np.roll(grid[row], change_in_location)
         return grid
 
     @property
     def adjusted_coords(self):
         """Convert binary array to a set of coordinates"""
         # Remove padding and find coordinates of updated system
-        grid = deepcopy(self.adjusted_array)
+        grid = deepcopy(self.second_adjust_array)
         y_min = np.argwhere(grid)[:, 0].min()
         y_max = np.argwhere(grid)[:, 0].max()
         x_min = np.argwhere(grid)[:, 1].min()
         x_max = np.argwhere(grid)[:, 1].max()
-        print(x_min, x_max, y_min, y_max)
+        print(
+            "Converted binary to coords, the xy bounds are: \n,"
+            f" x: {x_min}, {x_max}. y: {y_min}, {y_max}."
+        )
 
         grid = grid[y_min : y_max + 1, x_min : x_max + 1]
         lattice = np.argwhere(grid)
@@ -210,8 +224,8 @@ class Lattice:
         # ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
         ax.imshow(nodes[::-1])
         plt.gca().set_aspect("equal")
-        # if fout:
-        plt.savefig(f"{fout}.png", dpi=500)
+        if fout:
+            plt.savefig(f"{fout}.png", dpi=500)
         if show:
             plt.show()
 
@@ -227,16 +241,16 @@ class Lattice:
         if not ax:
             fig, ax = plt.subplots()
         plt.grid(True)
-        plt.rc("xtick", labelsize=6)  # fontsize of the tick labels
-        plt.rc("ytick", labelsize=6)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontsize(4)
         ax.xaxis.set_major_locator(MultipleLocator(32))
         ax.yaxis.set_major_locator(MultipleLocator(10))
         ax.set_xlabel("No. of nucleotides")
         ax.set_ylabel("No. of strands")
         ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
         plt.gca().set_aspect("equal")
-        # if fout:
-        plt.savefig(f"{fout}.png", dpi=500)
+        if fout:
+            plt.savefig(f"{fout}.png", dpi=500)
         if show:
             plt.show()
 
@@ -265,7 +279,8 @@ star = np.array(
     ]
 )
 if __name__ == "__main__":
-    polygon = geometry.Polygon(star * 0.1)
+    polygon = geometry.Polygon(trapezium * 30)
     lattice = Lattice(polygon)
-    lattice.plotArray(lattice.intersect_array, fout="Before", show=True)
-    lattice.plotCoords(lattice.adjusted_coords, fout="After", show=True)
+    # lattice.plotArray(lattice.adjusted_array, fout="First")
+    # lattice.plotArray(lattice.second_adjust_array, fout="Second")
+    lattice.plotCoords(lattice.adjusted_coords, fout="Straightened")
