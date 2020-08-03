@@ -15,3 +15,8 @@ When adding a script to the sandbox, try and do the following:
 - `empty.py` - contains nothing, acts as a template/placeholder
 - `file2vertices.py` - contains an algorithm to extract vertices from different file types and make them cyclical, currently does not work
 - `point_in_polygon.py` - experimental 2D point in polygon code
+<<<<<<< Updated upstream
+=======
+- `old_polygons.py`- old functions from `origamiUROP.polygons`
+- `openGL_polygon.py` - playground for a `pyqt5` and `OpenGL` visualisation of shapes
+>>>>>>> Stashed changes
