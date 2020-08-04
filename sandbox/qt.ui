@@ -13,7 +13,7 @@
         <property name="windowTitle">
             <string>MainWindow</string>
         </property>
-        <widget class="QOpenGLWidget" name="canvas">
+        <widget class="QGLWidget" name="canvas">
         <property name="geometry">
             <rect>
                 <x>0</x>
