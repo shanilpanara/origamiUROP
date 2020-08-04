@@ -5,9 +5,11 @@ class
 import numpy as np
 import pandas as pd
 from typing import List
-from origamiUROP.oxdna import Nucleotide
 import re
 from copy import deepcopy
+
+from .nucleotide import Nucleotide
+from ..tools import get_rotation_matrix
 
 # Constants
 PI = np.pi
@@ -27,58 +29,6 @@ BASE_BASE = 0.3897628551303122
 
 number_to_base = {0: "A", 1: "G", 2: "C", 3: "T"}
 base_to_number = {"A": 0, "G": 1, "C": 2, "T": 3}
-
-
-def get_rotation_matrix(axis, anglest):
-    """
-    Copied from https://github.com/rgatkinson/oxdna/blob/master/UTILS/utils.py 
-    The argument anglest can be either an angle in radiants
-    (accepted types are float, int or np.float64 or np.float64)
-    or a tuple [angle, units] where angle a number and
-    units is a string. It tells the routine whether to use degrees,
-    radiants (the default) or base pairs turns
-    axis --- Which axis to rotate about
-        Ex: [0,0,1]
-    anglest -- rotation in radians OR [angle, units]
-        Accepted Units:
-            "bp"
-            "degrees"
-            "radiants"
-        Ex: [np.pi/2] == [np.pi/2, "radians"]
-        Ex: [1, "bp"]
-    """
-    if not isinstance(anglest, (np.float64, np.float32, float, int)):
-        if len(anglest) > 1:
-            if anglest[1] in ["degrees", "deg", "o"]:
-                angle = (np.pi / 180.0) * anglest[0]
-                # angle = np.deg2rad (anglest[0])
-            elif anglest[1] in ["bp"]:
-                # Allow partial bp turns
-                angle = float(anglest[0]) * (np.pi / 180.0) * 35.9
-                # angle = int(anglest[0]) * (np.pi / 180.) * 35.9
-                # Older versions of numpy don't implement deg2rad()
-                # angle = int(anglest[0]) * np.deg2rad(35.9)
-            else:
-                angle = float(anglest[0])
-        else:
-            angle = float(anglest[0])
-    else:
-        angle = float(anglest)  # in degrees, I think
-
-    axis = np.array(axis)
-    axis /= np.sqrt(np.dot(axis, axis))
-    ct = np.cos(angle)
-    st = np.sin(angle)
-    olc = 1.0 - ct
-    x, y, z = axis
-
-    return np.array(
-        [
-            [olc * x * x + ct, olc * x * y - st * z, olc * x * z + st * y],
-            [olc * x * y + st * z, olc * y * y + ct, olc * y * z - st * x],
-            [olc * x * z - st * y, olc * y * z + st * x, olc * z * z + ct],
-        ]
-    )
 
 
 class Strand:
