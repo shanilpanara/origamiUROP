@@ -3,7 +3,11 @@ from typing import List
 import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
+from .oxdna.nucleotide import Nucleotide
 
+class DNAObject:
+    def __init__(self):
+        self.units = 'oxdna'
 
 class DNANode(np.ndarray):
     """
@@ -18,6 +22,12 @@ class DNANode(np.ndarray):
         self[:] = position[:]
         self._vector_3p = None
         self._vector_5p = None
+        self._a1_3p = None
+        self._a1_5p = None
+        self._a3_3p = None
+        self._a3_5p = None
+        self._angle_3p = None
+        self._angle_5p = None
 
     @property
     def angle(self) -> float:
@@ -60,6 +70,17 @@ class DNANode(np.ndarray):
     def vector_5p(self, new_vector: np.ndarray):
         self._vector_5p = new_vector
 
+    def update_from_nucleotide(self, nucleotide : Nucleotide, side : str):
+        if side == '3p':
+            self._a1_3p = nucleotide._a1
+            self._a3_3p = nucleotide._a3
+            return
+
+        elif side == '5p':
+            self._a1_5p = nucleotide._a1
+            self._a3_5p = nucleotide._a3
+            return
+
 
 class DNAEdge:
     """
@@ -99,6 +120,8 @@ class DNAEdge:
             base_orient_a3=self.unit_vector,
             **kwargs,
         )
+        self.vertices[0].update_from_nucleotide(strands[0].nucleotides[0], '3p')
+        self.vertices[1].update_from_nucleotide(strands[0].nucleotides[-1], '5p')
         return strands
 
     def segments(self) -> float:
