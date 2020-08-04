@@ -5,6 +5,7 @@ from shapely.geometry import MultiPoint
 from shapely import geometry
 
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from matplotlib.pyplot import MultipleLocator
 
 from operator import itemgetter
@@ -14,50 +15,45 @@ import itertools
 from origamiUROP.lattice import edge, node, route
 from origamiUROP.oxdna.strand import POS_STACK
 
-crossover_half_turns = {
-    0: 0,
-    1: 4,
-    3: 15,
-    5: 25,
-    7: 36,
-    9: 46,
-    11: 56,
-    13: 67,
-    15: 78,
-    17: 88,
-    19: 98,
-    21: 109,
-    23: 119,
-}
-
 
 def find_crossover_locations(
-    bp_per_turn: float = 10.45, kind: str = "half", size: int = 30
+    max_size: int = 30, bp_per_turn: float = 10.45, kind: str = "half",
 ) -> dict:
     """
-    Function which returns a dictionary of half turn or whole turn locations
-    for a given bp per turn. Locations are given in no. of base pairs
+    Function which returns an array containing the best locations 
+    for half or whole turns of the DNA strand where the strand will
+    stay in plane and have the least strain/stress build-up.
+    
+    This is computed given the number of basepairs per turn
+    & locations are given in no. of base pairs
 
     Arguments:
-    bp_per_turn --- (default: 10.45)
-    kind --- either half turns or whole turns
-    size --- max no. of turns to compute and add to dictionary
+
+        bp_per_turn --- (default: 10.45)
+        kind --- either half turns or whole turns
+        max_size --- max no. of turns to base pairs to the list
     """
-    crossover_location = {0: 0}
+    crossover_location = [0]
+    no_of_bp = 0
 
     # half turn
     if kind == "half":
-        # every odd number
-        for i in range(1, size, 2):
+        i = 1  # every odd number
+        while no_of_bp < max_size:
             # minus 1 at the end because Python indexing starts at 0
-            crossover_location[i] = int(round(bp_per_turn * 0.5 * i, 0) - 1)
+            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - 1)
+            crossover_location.append(no_of_bp)
+            i += 2
 
     # whole turns
     elif kind == "whole":
-        # every even number
-        for i in range(2, size, 2):
+        i = 2  # every even number
+        while no_of_bp < max_size:
             # minus 1 at the end because Python indexing starts at 0
-            crossover_location[int(i / 2)] = int(round(bp_per_turn * 0.5 * i, 0) - 1)
+            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - 1)
+            crossover_location.append(no_of_bp)
+            i += 2
+
     return crossover_location
 
 
@@ -68,10 +64,10 @@ def round_to_multiple(n, mo=0.34, decimal_places=2):
 
     Arguments:
 
-    n --- value (integer or float) to round  
-    mo --- "multiple_of" is the value (integer or float) which we want 
-    to round to a multiple of  
-    decimal_places --- no. of decimals to return
+        n --- value (integer or float) to round  
+        mo --- "multiple_of" is the value (integer or float) which 
+        we want to round to a multiple of  
+        decimal_places --- no. of decimals to return
     """
     a = (n // mo) * mo  # Smaller multiple
     b = a + mo  # Larger multiple
@@ -80,9 +76,23 @@ def round_to_multiple(n, mo=0.34, decimal_places=2):
 
 
 def modify_lattice_row(grid: np.ndarray, difference: np.ndarray):
-    # For the difference required to reach a multiple of X nucleotides on each row
-    # i.e. -5 or +11, remove (0) or add (1) to the lattice
-    # alternating each removal or addition to either side
+    """
+    Modifies the lattice sites for a given row in the `grid` by 
+    adding or removing the number of sites equal to the value which 
+    is stored in `difference` for that row
+
+    Arguments:
+        grid --- (n, x) numpy array
+        difference --- (n, 1) numpy array
+    
+    e.g. a difference of -5 or +11, remove (1 -> 0) or add (0 -> 1) 
+    to the lattice row, respectively. Each removal/addition occurs on 
+    the opposite side of the lattice than the previous removal/addition
+    
+
+    """
+    # For the difference required to reach a certain no. of nucleotides on each row
+
     for row, value in enumerate(difference):
         # Alternate between left and right
         sides = {"left": "right", "right": "left"}
@@ -121,7 +131,7 @@ class Lattice:
         y_spacing: float = 1.00,
         bp_per_turn: float = 10.45,
     ):
-        self.polygon_array = polygon
+        self.polygon_array = polygon.astype(dtype=np.float64)
         self.polygon = geometry.Polygon(polygon)
         self.x_spacing = x_spacing
         self.y_spacing = y_spacing
@@ -215,7 +225,7 @@ class Lattice:
         return grid
 
     @property
-    def second_adjust_array(self):
+    def straight_edge_array(self):
         """
         Algorithm to straighten out edges of the lattice
         - achieved by shifting each row to begin at a multiple of 16
@@ -227,22 +237,22 @@ class Lattice:
         #   Calc Rounded_location
         #   Change_location = Rounded - starting
         #   np.roll(grid[row])
-
+        straightening_factor = 4
         for row in range(np.shape(grid)[0]):
             if np.sum(grid[row]) == 0:  # to account for padding
                 continue
             else:
                 starting_location = int(np.argwhere(grid[row])[0])
-                rounded_location = round_to_multiple(starting_location, 8, 0)
+                rounded_location = round_to_multiple(starting_location, 4, 0)
                 change_in_location = rounded_location - starting_location
                 grid[row] = np.roll(grid[row], change_in_location)
         return grid
 
     @property
-    def adjusted_coords(self):
+    def final_coords(self):
         """Convert binary array to a set of coordinates"""
         # Remove padding and find coordinates of updated system
-        grid = deepcopy(self.second_adjust_array)
+        grid = deepcopy(self.straight_edge_array)
         y_min = np.argwhere(grid)[:, 0].min()
         y_max = np.argwhere(grid)[:, 0].max()
         x_min = np.argwhere(grid)[:, 1].min()
@@ -258,25 +268,45 @@ class Lattice:
         lattice[:, 0], lattice[:, 1] = lattice[:, 1], lattice[:, 0].copy()
         return lattice
 
-    def crossovers_binary(self, columns: int = 1):
-        grid = deepcopy(self.second_adjust_array)
+    def crossovers_binary(self):
+        grid = deepcopy(self.straight_edge_array)
         # copy the size of grid but fill it with zeros
         crossovers_array = np.zeros(np.shape(grid))
 
-        # for every row in the lattice
-        #   first site coords = ....
-        #   last site coords = .....
-        #   crossovers[first site coords] == 1
-        #   crossovers[last site coords] == 1
+        max_width = np.shape(grid)[1]
+        possible_crossovers = find_crossover_locations(max_width)
+        print("Possible Crossovers", possible_crossovers)
+        for row in range(np.shape(grid)[0]):
 
-        #   if columns == 1:
-        #       crossovers_array[row] =
-        return
+            # to account for padding
+            lattice_sites = np.sum(grid[row])
+            if lattice_sites == 0:
+                continue
+
+            # find x of first point
+            left_bound = np.argwhere(grid[row])[0]
+            for i, bp in enumerate(possible_crossovers):
+                if bp > lattice_sites:
+                    continue
+                crossovers_array[row, left_bound + bp] = 1 * grid[row, left_bound + bp]
+
+        return crossovers_array
 
     def crossovers_coords(self):
-        return
+        """Convert binary array to a set of coordinates"""
+        crossovers = deepcopy(self.crossovers_binary)
 
-    def plotPolygon(self, ax, nodes, invert):
+        coords = np.argwhere(crossovers)
+        # swap columns, np.argwhere returns x and y the wrong way around
+        coords[:, 0], coords[:, 1] = coords[:, 1], coords[:, 0].copy()
+
+        xmin = np.argwhere(coords[:, 0]).min()
+        ymin = np.argwhere(coords[:, 1]).min()
+
+        coords -= [xmin, ymin]
+        return coords
+
+    def plotPolygon(self, ax, nodes:np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
         x_min = polygon[:, 0].min()
         y_min = polygon[:, 1].min()
@@ -291,28 +321,39 @@ class Lattice:
 
         # add first value to start
         polygon = np.vstack((polygon, polygon[0]))
-        print(polygon)
-        if invert:
-            # flip
-            polygon[:, 1] = polygon[:, 1].max() - polygon[:, 1]
-            # remove padding
-            polygon += [16, 16, 0]
-        else:
+
+        if coords:
             # Center polygon
             polygon[:, 0] += (nodes[:, 0].max() - polygon[:, 0].max()) / 2
+        else:  
+            # flip
+            polygon[:, 1] = polygon[:, 1].max() - polygon[:, 1]
+            # add padding to match
+            polygon += [16, 16, 0]
+
         ax.plot(polygon[:, 0], polygon[:, 1], "r-")
 
         return ax
 
+    def plotCrossovers(self, ax, coords: bool ):
+        crossovers = deepcopy(self.crossovers_binary())
+
+        if coords:
+            ax.plot(crossovers[:, 0], crossovers[:, 1])
+        else:
+            crossovers = np.ma.masked_where(crossovers == 0, crossovers)
+            cmap = plt.get_cmap("cool")
+            ax.imshow(crossovers[::-1], cmap)
+
     def plot(
         self,
-        value: np.ndarray,
+        lattice: np.ndarray,
         ax: plt.Axes = None,
         fout: str = None,
         show: bool = False,
     ):
 
-        nodes = np.array(value)
+        nodes = np.array(lattice)
         if not ax:
             fig, ax = plt.subplots()
         # plt.grid(True)
@@ -325,17 +366,19 @@ class Lattice:
 
         if np.shape(nodes)[1] == 2:  # Plot Coordinates
             ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
-            self.plotPolygon(ax, nodes, invert=False)
+            self.plotPolygon(ax, nodes, coords=True)
+            self.plotCrossovers(ax, coords = True)
             ax.set_title("Lattice plotted from coords")
+
         else:  # Plot binary array
-            cmap = plt.get_cmap("binary")
+            cmap = plt.get_cmap("hot")
             ax.imshow(nodes[::-1], cmap)
-            self.plotPolygon(ax, nodes, invert=True)
+            self.plotPolygon(ax, nodes, coords=False)
+            self.plotCrossovers(ax, coords = False)
             ax.set_title("Lattice plotted from array")
 
         plt.gca().set_aspect(3)
-        if show:
-            plt.show()
+        plt.show()
         if fout:
             plt.savefig(f"{fout}.png", dpi=500)
 
@@ -365,9 +408,11 @@ star = np.array(
 )
 
 if __name__ == "__main__":
-    polygon = trapezium * 10
+    polygon = trapezium * 5
     lattice = Lattice(polygon)
     # lattice.plot(lattice.adjusted_array, fout="Unstraightened")
-    lattice.plot(lattice.adjusted_coords, fout="polygonCoords")
-    lattice.plot(lattice.second_adjust_array, fout="polygonArray")
+    # lattice.plot(lattice.adjusted_coords, fout="polygonCoords")
+    # lattice.plot(lattice.final_coords)
+    lattice.plot(lattice.straight_edge_array, fout="Crossovers_on_Trapezium")
+
     print("completed")
