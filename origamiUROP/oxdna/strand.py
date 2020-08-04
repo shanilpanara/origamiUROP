@@ -9,7 +9,7 @@ import re
 from copy import deepcopy
 
 from .nucleotide import Nucleotide
-from ..tools import get_rotation_matrix
+from .utils import get_rotation_matrix
 
 # Constants
 PI = np.pi

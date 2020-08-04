@@ -4,57 +4,7 @@ import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
 from .oxdna.nucleotide import Nucleotide
-
-def get_rotation_matrix(axis, anglest):
-    """
-    Copied from https://github.com/rgatkinson/oxdna/blob/master/UTILS/utils.py 
-    The argument anglest can be either an angle in radiants
-    (accepted types are float, int or np.float64 or np.float64)
-    or a tuple [angle, units] where angle a number and
-    units is a string. It tells the routine whether to use degrees,
-    radiants (the default) or base pairs turns
-    axis --- Which axis to rotate about
-        Ex: [0,0,1]
-    anglest -- rotation in radians OR [angle, units]
-        Accepted Units:
-            "bp"
-            "degrees"
-            "radiants"
-        Ex: [np.pi/2] == [np.pi/2, "radians"]
-        Ex: [1, "bp"]
-    """
-    if not isinstance(anglest, (np.float64, np.float32, float, int)):
-        if len(anglest) > 1:
-            if anglest[1] in ["degrees", "deg", "o"]:
-                angle = (np.pi / 180.0) * anglest[0]
-                # angle = np.deg2rad (anglest[0])
-            elif anglest[1] in ["bp"]:
-                # Allow partial bp turns
-                angle = float(anglest[0]) * (np.pi / 180.0) * 35.9
-                # angle = int(anglest[0]) * (np.pi / 180.) * 35.9
-                # Older versions of numpy don't implement deg2rad()
-                # angle = int(anglest[0]) * np.deg2rad(35.9)
-            else:
-                angle = float(anglest[0])
-        else:
-            angle = float(anglest[0])
-    else:
-        angle = float(anglest)  # in degrees, I think
-
-    axis = np.array(axis)
-    axis /= np.sqrt(np.dot(axis, axis))
-    ct = np.cos(angle)
-    st = np.sin(angle)
-    olc = 1.0 - ct
-    x, y, z = axis
-
-    return np.array(
-        [
-            [olc * x * x + ct, olc * x * y - st * z, olc * x * z + st * y],
-            [olc * x * y + st * z, olc * y * y + ct, olc * y * z - st * x],
-            [olc * x * z - st * y, olc * y * z + st * x, olc * z * z + ct],
-        ]
-    )
+from .oxdna.utils import get_rotation_matrix
 
 class DNAObject:
     def __init__(self):
@@ -69,16 +19,16 @@ class DNANode(np.ndarray):
     def __new__(cls, *args, **kwargs):
         return np.ndarray.__new__(cls, (3)) * 0.0
 
-    def __init__(self, position: np.ndarray):
+    def __init__(self, position: np.ndarray, **kwargs):
         self[:] = position[:]
-        self._vector_3p = None
-        self._vector_5p = None
-        self._pos_3p = None
-        self._pos_5p = None
-        self._a1_3p = None
-        self._a1_5p = None
-        self._a3_3p = None
-        self._a3_5p = None
+        self._vector_3p = kwargs.get('vector_3p', None)
+        self._vector_5p = kwargs.get('vector_5p', None)
+        self._pos_3p = kwargs.get('pos_3p', None)
+        self._pos_5p = kwargs.get('pos_5p', None)
+        self._a1_3p = kwargs.get('a1_3p', None)
+        self._a1_5p = kwargs.get('a1_5p', None)
+        self._a3_3p = kwargs.get('a3_3p', None)
+        self._a3_5p = kwargs.get('a3_5p', None)
         self._angle_3p = None
         self._angle_5p = None
 
@@ -129,7 +79,7 @@ class DNANode(np.ndarray):
 
     @a1_3p.setter
     def a1_3p(self, new_vector : np.ndarray):
-        self._a1_3p = new_vector / np.linalg.norm(new_vector)
+        self._a1_3p = new_vector
 
     @property
     def a1_5p(self):
@@ -137,7 +87,7 @@ class DNANode(np.ndarray):
 
     @a1_5p.setter
     def a1_5p(self, new_vector : np.ndarray):
-        self._a1_5p = new_vector / np.linalg.norm(new_vector)
+        self._a1_5p = new_vector
 
     @property
     def a3_3p(self):
@@ -145,7 +95,7 @@ class DNANode(np.ndarray):
 
     @a3_3p.setter
     def a3_3p(self, new_vector : np.ndarray):
-        self._a3_5p = new_vector / np.linalg.norm(new_vector)
+        self._a3_5p = new_vector
 
     @property
     def a3_5p(self):
@@ -153,7 +103,7 @@ class DNANode(np.ndarray):
 
     @a3_5p.setter
     def a3_5p(self, new_vector : np.ndarray):
-        self._a3_5p = new_vector / np.linalg.norm(new_vector)
+        self._a3_5p = new_vector
 
     @property
     def pos_3p(self):
@@ -208,7 +158,7 @@ class DNAEdge:
         if self.vertices[0].a1_5p:
             a1 = self.vertices[0].a1_5p
         else:
-            a1 = np.array([1., 0., 0.])
+            a1 = self.perp_vector
 
         strands = generate_helix(
             bp=no_of_nucleotides_in_edge,
@@ -218,12 +168,17 @@ class DNAEdge:
             base_orient_a3=self.unit_vector,
             **kwargs,
         )
-        self.vertices[0].update_from_nucleotide(strands[0].nucleotides[0], '3p')
-        self.vertices[1].update_from_nucleotide(strands[0].nucleotides[-1], '5p')
+        #self.vertices[0].update_from_nucleotide(strands[0].nucleotides[0], '3p')
+        #self.vertices[1].update_from_nucleotide(strands[0].nucleotides[-1], '5p')
         return strands
 
     def segments(self) -> float:
-        return
+        """
+        There are 2.5 segments in every unit of oxDNA distance.
+
+        Each segment represents a Nucleotide
+        """
+        return self.length / 2.5
 
     def node(self, node_3p: DNANode = None, node_5p: DNANode = None) -> DNANode:
         """
