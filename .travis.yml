@@ -24,6 +24,7 @@ install:
   - conda activate test-environment
   - conda install pandas numpy scipy matplotlib pytest
   - conda install -c conda-forge meshio
+  - conda install -c conda-forge shapely
   - pip install .
   
 script: 
