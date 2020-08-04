@@ -294,19 +294,24 @@ class Lattice:
 
     def crossovers_coords(self):
         """Convert binary array to a set of coordinates"""
-        crossovers = deepcopy(self.crossovers_binary)
+        crossovers = deepcopy(self.crossovers_binary())
+        y_min = np.argwhere(crossovers)[:, 0].min()
+        y_max = np.argwhere(crossovers)[:, 0].max()
+        x_min = np.argwhere(crossovers)[:, 1].min()
+        x_max = np.argwhere(crossovers)[:, 1].max()
+        print(
+            "Converted crossover binary to coords, the xy bounds are: \n"
+            f"x: {x_min}, {x_max}. y: {y_min}, {y_max}."
+        )
 
+        crossovers = crossovers[y_min : y_max + 1, x_min : x_max + 1]
         coords = np.argwhere(crossovers)
         # swap columns, np.argwhere returns x and y the wrong way around
         coords[:, 0], coords[:, 1] = coords[:, 1], coords[:, 0].copy()
 
-        xmin = np.argwhere(coords[:, 0]).min()
-        ymin = np.argwhere(coords[:, 1]).min()
-
-        coords -= [xmin, ymin]
         return coords
 
-    def plotPolygon(self, ax, nodes:np.ndarray, coords: bool):
+    def plotPolygon(self, ax, nodes: np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
         x_min = polygon[:, 0].min()
         y_min = polygon[:, 1].min()
@@ -325,7 +330,7 @@ class Lattice:
         if coords:
             # Center polygon
             polygon[:, 0] += (nodes[:, 0].max() - polygon[:, 0].max()) / 2
-        else:  
+        else:
             # flip
             polygon[:, 1] = polygon[:, 1].max() - polygon[:, 1]
             # add padding to match
@@ -335,12 +340,15 @@ class Lattice:
 
         return ax
 
-    def plotCrossovers(self, ax, coords: bool ):
-        crossovers = deepcopy(self.crossovers_binary())
+    def plotCrossovers(self, ax, coords: bool):
 
         if coords:
-            ax.plot(crossovers[:, 0], crossovers[:, 1])
+            crossovers = deepcopy(self.crossovers_coords())
+            ax.plot(
+                crossovers[:, 0], crossovers[:, 1], "bo", ms=1.5,
+            )
         else:
+            crossovers = deepcopy(self.crossovers_binary())
             crossovers = np.ma.masked_where(crossovers == 0, crossovers)
             cmap = plt.get_cmap("cool")
             ax.imshow(crossovers[::-1], cmap)
@@ -367,14 +375,14 @@ class Lattice:
         if np.shape(nodes)[1] == 2:  # Plot Coordinates
             ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
             self.plotPolygon(ax, nodes, coords=True)
-            self.plotCrossovers(ax, coords = True)
+            self.plotCrossovers(ax, coords=True)
             ax.set_title("Lattice plotted from coords")
 
         else:  # Plot binary array
             cmap = plt.get_cmap("hot")
             ax.imshow(nodes[::-1], cmap)
             self.plotPolygon(ax, nodes, coords=False)
-            self.plotCrossovers(ax, coords = False)
+            self.plotCrossovers(ax, coords=False)
             ax.set_title("Lattice plotted from array")
 
         plt.gca().set_aspect(3)
@@ -413,6 +421,6 @@ if __name__ == "__main__":
     # lattice.plot(lattice.adjusted_array, fout="Unstraightened")
     # lattice.plot(lattice.adjusted_coords, fout="polygonCoords")
     # lattice.plot(lattice.final_coords)
-    lattice.plot(lattice.straight_edge_array, fout="Crossovers_on_Trapezium")
+    lattice.plot(lattice.final_coords, fout="Crossovers_on_Trapezium_Coords")
 
     print("completed")
