@@ -6,24 +6,12 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from .oxdna.strand import Strand, generate_helix
-from .oxdna import Nucleotide, System
-from .tools import DNAEdge, DNANode
+from origamiUROP.oxdna.strand import Strand, generate_helix
+from origamiUROP.oxdna import Nucleotide, System
+from origamiUROP.tools import DNAEdge, DNANode
+from origamiUROP.lattice._lattice import Lattice
+from origamiUROP.lattice import LatticeNode, LatticeRoute
 
-# class Vertex:
-#     """
-#     A Vertex is a point in space that is connected to other vertices
-
-#     Defined simply by: x, y and z (in 3D)
-#     """
-
-#     def __init__(self, position: np.ndarray):
-#         self.position = position
-#         self.x = position[:, 0]
-#         self.y = position[:, 1]
-
-#     def distance(self, another_vertex: "Vertex") -> float:
-#         return np.linalg.norm(self.position - another_vertex.position)
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
@@ -35,7 +23,7 @@ class Edge(DNAEdge):
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
         super().__init__(vertex_1, vertex_2)
-        
+
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
@@ -150,6 +138,14 @@ class BoundaryPolygon:
             fig.savefig(fout)
         if show:
             fig.show()
+
+    def lattice(self, **kwargs):
+        """
+        Generate a Lattice object defining a large set of nucleotide sites
+        where the scaffold can be laid
+        """
+        _lattice = Lattice(self.vertices, **kwargs)
+        return _lattice
 
 
 # ---plot---#
