@@ -136,3 +136,7 @@ oxdna.*.conf
 oxdna.*.top
 lammps.*.conf
 *.cndo
+
+# config files for testing
+!oxdna.test.conf
+!oxdna.test.top
