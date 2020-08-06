@@ -11,7 +11,7 @@ def test_square():
     lattice = polygon.lattice()
     nodes = lattice.route()
     route = LatticeRoute(nodes)
-    route.plot()
+    #route.plot()
     system = System(np.array([50.0, 50.0, 50.0]))
     system.add_strand(route)
     system.write_oxDNA()

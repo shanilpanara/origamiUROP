@@ -6,19 +6,10 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-<<<<<<< HEAD
 from .oxdna.strand import Strand, generate_helix
 from .oxdna import Nucleotide, System
 from .tools import DNAEdge, DNANode
 from .lattice import Lattice
-=======
-from origamiUROP.oxdna.strand import Strand, generate_helix
-from origamiUROP.oxdna import Nucleotide, System
-from origamiUROP.tools import DNAEdge, DNANode
-from origamiUROP.lattice._lattice import Lattice
-from origamiUROP.lattice import LatticeNode, LatticeRoute
-
->>>>>>> 374bd1d5c913d4c05445a15fd2f7233017da3928
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
@@ -35,11 +26,6 @@ class Edge(DNAEdge):
     """
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
-<<<<<<< HEAD
-=======
-        super().__init__(vertex_1, vertex_2)
-
->>>>>>> 374bd1d5c913d4c05445a15fd2f7233017da3928
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
@@ -154,5 +140,5 @@ class BoundaryPolygon:
         if show:
             fig.show()
 
-    def lattice(**lattice_kwargs) -> Lattice:
+    def lattice(self, **lattice_kwargs) -> Lattice:
         return Lattice(self.vertices, **lattice_kwargs)
