@@ -8,8 +8,7 @@ def square_route():
     square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
     polygon = BoundaryPolygon(square * 10)
     lattice = polygon.lattice()
-    nodes = lattice.route()
-    route = LatticeRoute(nodes)
+    route = lattice.route()
     return route
 
 def test_square():

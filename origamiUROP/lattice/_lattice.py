@@ -11,7 +11,8 @@ from matplotlib.pyplot import MultipleLocator
 from copy import deepcopy
 import itertools
 
-from . import LatticeNode
+from .node import LatticeNode
+from .route import LatticeRoute
 from ..oxdna.strand import POS_STACK
 
 from bisect import bisect_left, bisect_right
@@ -371,7 +372,7 @@ class Lattice:
 
         return coords
 
-    def route(self) -> List[LatticeNode]:
+    def route(self, *args, **kwargs) -> List[LatticeNode]:
         """Generate Scaffold Route, returns list of LatticeNode objects"""
         coords = deepcopy(self.get_crossovers_coords())
 
@@ -396,7 +397,7 @@ class Lattice:
                 vertex_list[row * 2 + 1] = coords[vertex_index_L]
 
         node_list = [LatticeNode(i) for i in vertex_list]
-        return node_list
+        return LatticeRoute(node_list, *args, **kwargs)
 
     def plotPolygon(self, ax, nodes: np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
