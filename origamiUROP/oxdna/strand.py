@@ -108,10 +108,10 @@ class Strand:
 
     @property
     def sequence(self) -> str:
-        if len(self._nucleotides) == 0:
+        if len(self.nucleotides) == 0:
             return ""
-            
-        return "".join([i._base for i in self._nucleotides])
+
+        return "".join([i._base for i in self.nucleotides])
 
     @property
     def nucleotides(self) -> list:
@@ -155,11 +155,13 @@ class Strand:
         Returns a dataframe containing the information needed to write
         the bonds section of a LAMMPS configuration data file
         """
-        result = pd.DataFrame({
-            'type' : [1] * len(self.nucleotides),
-            'atom_1' : [i.index + 1 for i in self.nucleotides],
-            'atom_2' : [i._after + 1 for i in self.nucleotides],
-        })
+        result = pd.DataFrame(
+            {
+                "type": [1] * len(self.nucleotides),
+                "atom_1": [i.index + 1 for i in self.nucleotides],
+                "atom_2": [i._after + 1 for i in self.nucleotides],
+            }
+        )
         result = result[result.atom_1 != 0]
         result = result[result.atom_2 != 0]
         return result
@@ -200,12 +202,12 @@ class Strand:
 def generate_helix(
     bp: int,
     sequence: str = None,
+    # length: float = None, # draft for future
     start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
     back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
     base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
     initial_rot: float = 0.0,  # radians
     BP_PER_TURN: float = 10.34,
-    # length: float = None, # draft for future
     double: bool = False,
     double_start: int = None,
     double_end: int = None,
@@ -243,7 +245,7 @@ def generate_helix(
     """
 
     # Set Sequence
-    if sequence is not None:
+    if sequence:
         try:
             assert type(sequence) == str
         except TypeError:

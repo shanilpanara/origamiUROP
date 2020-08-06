@@ -6,8 +6,9 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from origamiUROP.oxdna.strand import Strand, generate_helix
-from origamiUROP.oxdna import Nucleotide, System
+from .oxdna.strand import Strand, generate_helix
+from .oxdna import Nucleotide, System
+from .tools import DNAEdge, DNANode
 
 # class Vertex:
 #     """
@@ -27,13 +28,14 @@ from origamiUROP.oxdna import Nucleotide, System
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
 
-class Edge:
+class Edge(DNAEdge):
     """ 
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
-        self.vertices = np.array([vertex_1, vertex_2])
+        super().__init__(vertex_1, vertex_2)
+        
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
@@ -41,43 +43,6 @@ class Edge:
             raise ValueError("Edge must lie in the xy plane (z values must be equal)")
         elif (vertex_1 == vertex_2).all():
             raise ValueError("Given verticies must be different")
-
-    @property
-    def length(self):
-        return np.linalg.norm(self.vertices[1] - self.vertices[0])
-
-    @property
-    def vector(self) -> np.ndarray:
-        return self.vertices[1] - self.vertices[0]
-
-    @property
-    def unit_vector(self) -> np.ndarray:
-        return self.vector / (self.vector ** 2).sum() ** 0.5
-
-    @property
-    def perp_vector(self) -> np.ndarray:
-        """Perpendicular vector which lies in the xy plane"""
-        return np.cross(self.unit_vector, np.array([0, 0, 1]))
-
-    def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
-
-        if not sequence:
-            # in future version, this will not be so
-            # straightforward
-            no_of_nucleotides_in_edge = int(self.length)
-
-        else:
-            no_of_nucleotides_in_edge = len(sequence)
-
-        strands = generate_helix(
-            bp=no_of_nucleotides_in_edge,
-            sequence=sequence,
-            start_pos=self.vertices[0],
-            back_orient_a1=self.perp_vector,
-            base_orient_a3=self.unit_vector,
-            **kwargs,
-        )
-        return strands
 
 
 def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
