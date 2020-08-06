@@ -11,10 +11,10 @@ from matplotlib.pyplot import MultipleLocator
 from copy import deepcopy
 import itertools
 
-from origamiUROP.lattice import edge, node, route
-from origamiUROP.oxdna.strand import POS_STACK
+from . import LatticeNode
+from ..oxdna.strand import POS_STACK
 
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 
 
 def find_crossover_locations(
@@ -147,13 +147,13 @@ def modify_lattice_row(grid: np.ndarray, difference: np.ndarray):
 class Lattice:
     def __init__(
         self,
-        polygon: np.ndarray,
+        polygon_vertices: np.ndarray,
         grid_size: List[float] = [POS_STACK, 1.00],
         bp_per_turn: float = 10.45,
         straightening_factor: int = 8,
     ):
-        self.polygon_array = polygon.astype(dtype=np.float64)
-        self.polygon = geometry.Polygon(polygon)
+        self.polygon_array = polygon_vertices.astype(dtype=np.float64)
+        self.polygon = geometry.Polygon(polygon_vertices)
         self.grid_size = grid_size
         self.x_spacing = grid_size[0]
         self.y_spacing = grid_size[1]
@@ -285,6 +285,15 @@ class Lattice:
         return grid
 
     @property
+    def final_array(self):
+        """
+        Returns lattice points as an array of 1's and 0's
+
+        1's represent lattice sites where scaffold can be placed
+        """
+        return self.straight_edge_array
+
+    @property
     def final_coords(self):
         """Returns lattice points as a set of coordinates"""
         # Remove padding and find coordinates of updated system
@@ -361,6 +370,33 @@ class Lattice:
         coords[:, 0], coords[:, 1] = coords[:, 1], coords[:, 0].copy()
 
         return coords
+
+    def route(self) -> List[LatticeNode]:
+        """Generate Scaffold Route, returns list of LatticeNode objects"""
+        coords = deepcopy(self.get_crossovers_coords())
+
+        # add 3rd column (z = 0)
+        shape = np.shape(coords)
+        if shape[1] != 3:
+            coords = np.c_[coords, np.zeros(shape[0])]
+
+        crossovers_per_row = 2
+        lattice_rows = int(coords[:, 1].max() + 1)  # coords counts from 0
+        vertices_in_route = int(crossovers_per_row * lattice_rows)
+        vertex_list = np.zeros((vertices_in_route, 3))
+
+        for row in range(0, lattice_rows):
+            vertex_index_L = bisect_left(coords[:, 1], row)
+            vertex_index_R = bisect_right(coords[:, 1], row) - 1
+            if row % 2 == 0:  # if even
+                vertex_list[row * 2] = coords[vertex_index_L]
+                vertex_list[row * 2 + 1] = coords[vertex_index_R]
+            else:  # if odd
+                vertex_list[row * 2] = coords[vertex_index_R]
+                vertex_list[row * 2 + 1] = coords[vertex_index_L]
+
+        node_list = [LatticeNode(i) for i in vertex_list]
+        return node_list
 
     def plotPolygon(self, ax, nodes: np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
@@ -464,7 +500,7 @@ star = np.array(
 )
 
 if __name__ == "__main__":
-    polygon = square * 5
+    polygon = square * 10
     lattice = Lattice(polygon, straightening_factor=4)
     # lattice.plot(lattice.adjusted_array, fout="Unstraightened")
     # lattice.plot(lattice.adjusted_coords, fout="polygonCoords")
@@ -472,7 +508,6 @@ if __name__ == "__main__":
     # lattice.plot(lattice.final_coords, fout="Crossovers_on_Trapezium_Coords", show=True)
 
     lattice.plot(lattice.final_coords, fout="Coords")
-    lattice.plot(lattice.straight_edge_array, fout="Array")
-    # lattice.plot(lattice.final_coords, fout="intersect coords after")
+    lattice.plot(lattice.final_array, fout="Array")
 
     print("completed")
