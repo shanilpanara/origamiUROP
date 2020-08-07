@@ -6,6 +6,8 @@ import pandas as pd
 
 from typing import List
 
+from .utils import get_rotation_matrix
+
 # Emperical oxDNA constants
 POS_BACK = -0.4
 POS_STACK = 0.34
@@ -20,6 +22,19 @@ LMP_BASE = {
 LMP_MASS = 3.1575
 LMP_INERTIA = 0.435179
 LMP_SHAPE = 1.1739845031423408
+
+ACROSS = {
+    'A' : 'T',
+    'C' : 'G',
+    'G' : 'C',
+    'T' : 'A',
+    'a' : 't',
+    't' : 'a',
+    'c' : 'g',
+    'g' : 'c'
+}
+
+BASE_BASE = 0.3897628551303122
 
 class Nucleotide:
     """
@@ -194,4 +209,47 @@ class Nucleotide:
                 "5p": self._after,
             }
         )
+
+    def make_3p(base: str) -> "Nucleotide":
+        return
+
+    def make_5p(self, base: str, angle : float = 0.599) -> "Nucleotide":
+        """
+        Returns a new Nucleotide in the 5' direction. The angle used
+        for rotating the a1 vector can be specified in radians.
+
+        Args:
+        
+        base
+            standard string base
+        angle (0.599) 
+            angle of a1 rotation around a3 axis in radians
+
+        Returns:
+        
+        A new Nucleotide generated to be in the preferred orientation
+        in the 5' direction
+        """
+        rotation_matrix = get_rotation_matrix(self._a3, angle)
+        a1 = np.dot(
+                self._a1,
+                rotation_matrix,
+            )
+        # shift up in a3 direction
+        new_base = self.pos_base + BASE_BASE * self._a3
+        new_pos = new_base - a1 * POS_BASE * 1.5
+        return Nucleotide(base, new_pos, a1, self._a3.copy())
+
+
+    def make_across(self) -> "Nucleotide":
+        """
+        Returns:
+        
+        A Nucleotide across (aka complementary)
+        """
+        a1 = -self._a1
+        a3 = -self._a3
+        pos_com = self.pos_com - a1 * (1.85 + 2 * POS_BACK)
+        return Nucleotide(ACROSS[self._base], pos_com, a1, a3)
+
 

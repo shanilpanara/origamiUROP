@@ -3,7 +3,6 @@ from typing import List
 import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
-from .oxdna.nucleotide import Nucleotide
 from .oxdna.utils import get_rotation_matrix
 
 class DNAObject:
@@ -161,11 +160,11 @@ class DNAEdge:
             a1 = self.perp_vector
 
         strands = generate_helix(
-            bp=no_of_nucleotides_in_edge,
+            n=no_of_nucleotides_in_edge,
             sequence=sequence,
-            start_pos=self.vertices[0],
-            back_orient_a1=a1,
-            base_orient_a3=self.unit_vector,
+            start_position=self.vertices[0],
+            a1=a1,
+            direction=self.unit_vector,
             **kwargs,
         )
         #self.vertices[0].update_from_nucleotide(strands[0].nucleotides[0], '3p')

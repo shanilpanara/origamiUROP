@@ -65,7 +65,7 @@ def test_Strand():
 
 
 def test_generate_helix_ss():
-    ssDNA_helix = generate_helix(40, double=False)
+    ssDNA_helix = generate_helix(n=40, double=False)
 
     assert type(ssDNA_helix) == list
     assert len(ssDNA_helix) == 1
@@ -80,7 +80,7 @@ def test_generate_helix_ss():
 
 
 def test_generate_helix_ds():
-    dsDNA_helix = generate_helix(10, double=True, sequence="AGGGACGATG")
+    dsDNA_helix = generate_helix(n=10, double=True, sequence="AGGGACGATG")
 
     assert type(dsDNA_helix) == list
     assert len(dsDNA_helix) == 2
@@ -94,14 +94,14 @@ def test_generate_helix_ds():
 
 
 def test_generate_helix_seq():
-    ssDNA_with_short_seq = generate_helix(10, sequence="AAA")
+    ssDNA_with_short_seq = generate_helix(n=10, sequence="AAA")
     strand = ssDNA_with_short_seq[0]
 
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:3] == "AAA"
 
     long_seq = "AGAT" * 5
-    ssDNA_with_long_seq = generate_helix(10, sequence=long_seq)
+    ssDNA_with_long_seq = generate_helix(n=10, sequence=long_seq)
     strand = ssDNA_with_long_seq[0]
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:11] == long_seq[0:10]

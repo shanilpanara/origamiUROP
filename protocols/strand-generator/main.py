@@ -27,7 +27,7 @@ def get_5p(nuc : Nucleotide, base : str = 'T') -> Nucleotide:
             rotation_matrix,
         )
     # shift up in a3 direction
-    new_base = nuc.pos_base + BASE_BASE * nuc._a3
+    new_base = nuc.pos_base + POS_STACK * nuc._a3
     new_pos = new_base - a1 * POS_BASE * 1.5
     return Nucleotide(base, new_pos, a1, nuc._a3.copy())
 
@@ -53,7 +53,7 @@ def main():
     )
     print(f"Nucleotide #0: {nucleotides[0]}")
     print("Creating more nucleotides...\n")
-    for i in range(40):
+    for i in range(39):
         nucleotides.append(get_5p(nucleotides[-1]))
     strand = Strand(nucleotides=nucleotides)
     print(f"Strand: {strand}")
@@ -64,7 +64,11 @@ def main():
         nucleotides.append(get_across(nuc))
     system.add_strand(Strand(nucleotides))
     system.add_strands(
-        generate_helix(40, start_pos=np.array([-10., -10., 0.]), double=True)
+        generate_helix(
+            40, 
+            start_position=np.array([-10., -10., 0.]), 
+            double=True,
+        )
     )
     system.write_oxDNA('generator')
     return
