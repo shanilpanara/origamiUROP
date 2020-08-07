@@ -37,7 +37,7 @@ def get_across(nuc : Nucleotide) -> Nucleotide:
     """
     a1 = -nuc._a1
     a3 = -nuc._a3
-    pos_com = nuc.pos_com - a1 * (FENE_EPS + 2 * POS_BACK)
+    pos_com = nuc.pos_com - a1 * (1.85 + 2 * POS_BACK)
     return Nucleotide(ACROSS[nuc._base], pos_com, a1, a3)
 
 def main():
