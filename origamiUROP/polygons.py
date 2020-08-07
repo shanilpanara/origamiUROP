@@ -125,7 +125,7 @@ class BoundaryPolygon:
             f.write(output_string)
 
     def plot2D(
-        self, ax: plt.Axes = None, fout: str = None, show: bool = True, **kwargs
+        self, ax: plt.Axes = None, fout: str = None, **kwargs
     ):
         """
         Assumes that the shape is 2D and lies on the z=0 plane.
@@ -133,11 +133,11 @@ class BoundaryPolygon:
         """
         if not ax:
             fig, ax = plt.subplots()
-        ax.plot(self.x, self.y, "k-", **kwargs)
+        ax.plot(list(self.x) + [self.x[0]], list(self.y) + [self.y[0]], "k-", **kwargs)
         ax.set_aspect("equal", "datalim")
         if fout:
             fig.savefig(fout)
-        if show:
+        if not ax:
             fig.show()
 
     def lattice(self, **lattice_kwargs) -> Lattice:

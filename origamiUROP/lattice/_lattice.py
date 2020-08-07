@@ -472,7 +472,8 @@ class Lattice:
         plt.gca().set_aspect(5)
         if fout:
             plt.savefig(f"{fout}.png", dpi=500)
-        else:
+        
+        if not ax:
             plt.show()
 
 

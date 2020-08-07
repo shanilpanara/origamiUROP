@@ -3,11 +3,20 @@ from origamiUROP.lattice import LatticeRoute
 from origamiUROP.polygons import BoundaryPolygon
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+DIST_SQUARE = 2.60
+
+def square():
+    square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
+    polygon = BoundaryPolygon(square * 20)
+    return polygon
 
 def square_route():
-    square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
-    polygon = BoundaryPolygon(square * 10)
-    lattice = polygon.lattice()
+    polygon = square()
+    lattice = polygon.lattice(
+        grid_size=(DIST_SQUARE, 5.44)
+    )
     route = lattice.route()
     return route
 
@@ -18,6 +27,11 @@ def test_square():
     system.write_oxDNA()
 
 if __name__ == "__main__":
+    polygon = square()
+    print(polygon.vertices)
     route = square_route()
-    route.plot()
+    fig, ax = plt.subplots()
+    polygon.plot2D(ax=ax)
+    route.plot(ax=ax)
+    plt.show()
     test_square()
