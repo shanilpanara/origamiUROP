@@ -19,6 +19,8 @@ def test_Nucleotide():
 
     print(nucleotide)
     print(nucleotide.series)
+    nucleotide.make_5p('A')
+    nucleotide.make_across()
     return
 
 
