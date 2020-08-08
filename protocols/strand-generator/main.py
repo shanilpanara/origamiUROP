@@ -41,6 +41,7 @@ def get_across(nuc : Nucleotide) -> Nucleotide:
     return Nucleotide(ACROSS[nuc._base], pos_com, a1, a3)
 
 def main():
+    # Add Strand 1 - ssDNA
     nucleotides = []
     print("Creating a nucleotide:")
     nucleotides.append(
@@ -59,10 +60,15 @@ def main():
     print(f"Strand: {strand}")
     system = System(np.array([20., 20., 20.]))
     system.add_strand(strand)
+
+    # Add Strand 2 - complementary ssDNA to 1
     nucleotides = []
     for nuc in strand.nucleotides[::-1]:
         nucleotides.append(get_across(nuc))
     system.add_strand(Strand(nucleotides))
+
+    # Add Strand 3 & 4 - dsDNA
+    # Does exactly what the above does, but at a diff start pos.
     system.add_strands(
         generate_helix(
             40, 
