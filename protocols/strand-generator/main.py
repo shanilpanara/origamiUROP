@@ -40,7 +40,7 @@ def get_across(nuc : Nucleotide) -> Nucleotide:
     pos_com = nuc.pos_com - a1 * (1.85 + 2 * POS_BACK)
     return Nucleotide(ACROSS[nuc._base], pos_com, a1, a3)
 
-def main():
+def main(output_format='oxdna'):
     nucleotides = []
     print("Creating a nucleotide:")
     nucleotides.append(
@@ -70,9 +70,15 @@ def main():
             double=True,
         )
     )
-    system.write_oxDNA('generator')
+    if output_format.lower() == 'oxdna':
+    	system.write_oxDNA('generator')
+    elif output_format.lower() == 'lammps':
+        system.write_LAMMPS('generator')
     return
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('-f', '--output-format', required=False, default='oxdna')
     print('Running Strand Generator...\n')
-    main()
+    main(**vars(parser.parse_args())
