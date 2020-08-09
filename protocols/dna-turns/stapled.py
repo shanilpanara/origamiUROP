@@ -5,7 +5,7 @@ from origamiUROP.oxdna import System
 
 FENE_LENGTH = 0.76
 
-def main(length=17, n_strands=10):
+def main(length=17, n_strands=10, output_format='oxdna')
     # generate a strand
     strands = []
     staples = []
@@ -63,11 +63,15 @@ def main(length=17, n_strands=10):
             system.add_strand(new_staple.copy())
         except IndexError:
             pass
-    system.write_oxDNA('stapled_turns')
+    if output_format.lower() == 'oxdna':
+        system.write_oxDNA('stapled_turns')
+    elif output_format.lower() == 'lammps':
+        system.write_lammps_data('stapled_turns')
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('-l', '--length', default=17, required=False, type=int)
     parser.add_argument('-n', '--n-strands', default=10, required=False, type=int)
+    parser.add_argument('-f', '--output-format', default='oxdna', required=False)
     main(**vars(parser.parse_args()))
