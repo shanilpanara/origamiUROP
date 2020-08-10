@@ -80,7 +80,7 @@ class Nucleotide:
         self._L = L
 
         # make sure that the a1 and a3 vectors are orthogonal
-        assert np.dot(self._a1, self._a3) == 0.0
+        assert abs(round(np.dot(self._a1, self._a3))) == 0.0
 
         # these are accessed when the nucleotide is added
         # to an oxdna.Strand._nucleotides object
