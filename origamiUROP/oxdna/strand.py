@@ -21,6 +21,7 @@ POS_STACK = 0.34
 POS_BASE = 0.4
 
 FENE_EPS = 2.0
+FENE_LENGTH = 0.76
 
 # Center of the double strand
 CM_CENTER_DS = POS_BASE + 0.2
