@@ -13,7 +13,7 @@ import itertools
 
 from .node import LatticeNode
 from .route import LatticeRoute
-from ..oxdna.strand import POS_STACK
+from ..oxdna.strand import POS_STACK, FENE_LENGTH
 
 from bisect import bisect_left, bisect_right
 

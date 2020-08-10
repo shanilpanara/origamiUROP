@@ -8,6 +8,7 @@ from ..tools import DNANode, DNAEdge
 from .edge import LatticeEdge
 from .node import LatticeNode
 from ..oxdna import Strand, System
+from ..oxdna.strand import generate_helix, POS_BACK, FENE_LENGTH
 
 class LatticeRoute(Strand):
     """
@@ -20,7 +21,7 @@ class LatticeRoute(Strand):
         super().__init__(self._nucleotides)
 
     @property
-    def nodes(self):
+    def nodes(self) -> List[LatticeNode]:
         return self._nodes
 
     def add_node(self, addition: LatticeNode, index: int = None, update : bool = False):
@@ -92,6 +93,41 @@ class LatticeRoute(Strand):
             strand = edge.strand()[0].copy()
             self._nucleotides += strand.nucleotides
 
+    def update_strands(self):
+        """
+        Generate strands between 2D lattice nodes,
+        then generate a single strand representing the route
+        """
+        strands = []
+        edge_0 = self.edges[0]
+        strand = generate_helix(n = edge_0.nt_length,
+                                start_position= edge_0.vertices[0],
+                                direction = edge_0.unit_vector,
+                                a1 = edge_0.perp_vector)[0]
+        strands.append(strand.copy())
+
+        if len(self.edges) < 2:
+            return strands            
+
+        for i in range(2,len(self.edges)+1,2):
+
+            last_nuc = strands[-1].nucleotides[-1]
+            direction = -last_nuc._a3
+            a1 = -last_nuc._a1
+
+            # ensure the backbone position is FENE_LENGTH away from
+            # the backbone position of the previous nucleotide
+            start = last_nuc.pos_back + (FENE_LENGTH - POS_BACK) * a1
+
+            # generate strand above that's going in opposite direction
+            strand = generate_helix(n=self.edges[i].nt_length,
+                                    start_position=start,
+                                    direction=direction,
+                                    a1=a1)[0]
+            strands.append(strand)
+
+        return strands
+
     def plot(self, ax : plt.Axes = None, fout : str = None):
         nodes = np.array(self.nodes)
         if not ax:
@@ -114,6 +150,12 @@ class LatticeRoute(Strand):
         plt.show()
 
     def system(self, **kwargs):
+        nucleotides = []
+        strands = self.update_strands()
+        for strand in strands:
+            nucleotides += strand.nucleotides
+        strand = Strand(nucleotides=nucleotides)
+
         _system = System(kwargs.get('box', np.array([50., 50., 50.])))
-        _system.add_strand(self)
+        _system.add_strand(strand)
         return _system
