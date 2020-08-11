@@ -83,6 +83,9 @@ def main(number : int = 10, double : bool = False):
     return
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('-f', '--output-format', required=False, default='oxdna')
     print('Running Strand Generator...\n')
     from argparse import ArgumentParser
     parser = ArgumentParser()
