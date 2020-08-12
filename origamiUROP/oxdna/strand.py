@@ -189,7 +189,7 @@ def generate_helix(
 
     # handle a1/angle arguments
     if initial_rotation:
-        a1 = get_rotation_matrix(direction, initial_rotation)
+        a1 = np.dot(get_rotation_matrix(direction, initial_rotation), a1)
 
     # initialise strand list
     strands = []

@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 from .oxdna.strand import Strand, generate_helix
-from .oxdna.utils import get_rotation_matrix
+from .oxdna.utils import get_rotation_matrix, next_5p, SHIFT_ACROSS, SHIFT_BASE
 
 class DNAObject:
     def __init__(self):
@@ -28,8 +28,8 @@ class DNANode(np.ndarray):
         self._a1_5p = kwargs.get('a1_5p', None)
         self._a3_3p = kwargs.get('a3_3p', None)
         self._a3_5p = kwargs.get('a3_5p', None)
-        self._angle_3p = None
-        self._angle_5p = None
+        self._angle_3p = 0.0
+        self._angle_5p = 0.0
 
     @property
     def angle(self) -> float:
@@ -127,8 +127,12 @@ class DNAEdge:
     """
 
     def __init__(
-        self, vertex_1: (np.ndarray or DNANode), vertex_2: (np.ndarray or DNANode)
+        self, 
+        vertex_1: (np.ndarray or DNANode), 
+        vertex_2: (np.ndarray or DNANode),
+        theta: float = 0.0,
     ):
+        self.theta = theta
         if not isinstance(vertex_1, DNANode):
             vertex_1 = DNANode(vertex_1)
         if not isinstance(vertex_2, DNANode):
@@ -139,7 +143,6 @@ class DNAEdge:
         
         self.vertices[1].vector_3p = -self.vector
         self.vertices[1].a3_3p = self.unit_vector
-        self.vertices[1].a1_3p = None
 
     def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
 
@@ -159,10 +162,12 @@ class DNAEdge:
         else:
             a1 = self.perp_vector
 
+        start = self.vertices[0] - (SHIFT_ACROSS + SHIFT_BASE) * a1
+
         strands = generate_helix(
             n=no_of_nucleotides_in_edge,
             sequence=sequence,
-            start_position=self.vertices[0],
+            start_position=start,
             a1=a1,
             direction=self.unit_vector,
             **kwargs,
@@ -194,6 +199,15 @@ class DNAEdge:
             pass
         else:
             raise TypeError("Shouldn't get to this point")
+
+    @property
+    def summary(self) -> str:
+        """Extended equivalent of self.__repr__"""
+        string = [""]
+        string.append(f"{self.vertices[0]} -> {self.vertices[1]}")
+        string.append(f"{self.unit_vector}")
+        string.append(f"r={self.length}, nt={self.nt_length}")
+        return "\n\t".join(string)
 
     @property
     def length(self):
