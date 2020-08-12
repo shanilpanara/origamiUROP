@@ -13,6 +13,11 @@ POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
 
+# Debesh's oxDNA constants
+SHIFT_BASE = 0.5
+SHIFT_ACROSS = 0.56 - (SHIFT_BASE * 0.9)
+SHIFT_ROUND = -0.105
+
 LMP_BASE = {
     'A' : 1,
     'C' : 2,
@@ -213,7 +218,12 @@ class Nucleotide:
     def make_3p(base: str) -> "Nucleotide":
         return
 
-    def make_5p(self, base: str, angle : float = 0.599) -> "Nucleotide":
+    def make_5p(
+        self, 
+        base: str, 
+        angle: float = 0.626, 
+        rise: float = 0.390,
+    ) -> "Nucleotide":
         """
         Returns a new Nucleotide in the 5' direction. The angle used
         for rotating the a1 vector can be specified in radians.
@@ -222,22 +232,26 @@ class Nucleotide:
         
         base
             standard string base
-        angle (0.599) 
+        angle (0.626) 
             angle of a1 rotation around a3 axis in radians
+        rise (0.390)
+            difference in a3 direction between nucleotides
 
         Returns:
         
         A new Nucleotide generated to be in the preferred orientation
         in the 5' direction
         """
+        # shift round in a1 direction
         rotation_matrix = get_rotation_matrix(self._a3, angle)
         a1 = np.dot(
-                self._a1,
                 rotation_matrix,
+                self._a1,
             )
         # shift up in a3 direction
-        new_base = self.pos_base + BASE_BASE * self._a3
-        new_pos = new_base - a1 * POS_BASE * 1.5
+        new_base = self.pos_base + rise * self._a3
+        new_pos = new_base - a1 * SHIFT_BASE
+        new_pos += SHIFT_ROUND * np.cross(self._a3, a1)
         return Nucleotide(base, new_pos, a1, self._a3.copy())
 
 
@@ -249,7 +263,7 @@ class Nucleotide:
         """
         a1 = -self._a1
         a3 = -self._a3
-        pos_com = self.pos_com - a1 * (1.85 + 2 * POS_BACK)
+        pos_com = self.pos_com - a1 * 2 * (SHIFT_BASE + SHIFT_ACROSS)
         return Nucleotide(ACROSS[self._base], pos_com, a1, a3)
 
 
