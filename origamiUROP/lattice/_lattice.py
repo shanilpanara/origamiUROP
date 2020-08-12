@@ -355,13 +355,14 @@ class Lattice:
                 if left0-left1 == 0: continue
                 assert left0 - left1 != 0
             
-
+            ### Initialise some useful values
             # find index in poss_cross correlating to no. of possible crossovers in that row
             cross_idx_bottom = bisect_left(poss_cross, row_width[0])
             cross_idx_top = bisect_left(poss_cross, row_width[1])             
             TminusB = row_width[1]-row_width[0]
-            row0_diff = 0
+            top_bigger = True if TminusB > 0 else False
             extra_turns = cross_idx_bottom - cross_idx_top # in whole row
+            row0_diff = 0
 
             # Same size rows, just shift them left or right
             if TminusB == 0:
@@ -372,10 +373,10 @@ class Lattice:
                 row1 = np.roll(row1, row1_roll)          
             
             elif R:
-                extra_turns_right = int(round(abs(right1-right0) / self.bp_per_turn, 2))
+                extra_turns_right = int(round(abs(right1-right0) / self.bp_per_turn, 0))
                 if abs(extra_turns) > 1:
                     
-                    if TminusB < 0:
+                    if not top_bigger:
                         # shorten the end of row 0
                         row0_diff = poss_cross[cross_idx_bottom - extra_turns_right] - row_width[0]
                     else:
@@ -386,47 +387,92 @@ class Lattice:
 
                 elif abs(extra_turns) == 1:
                     #if the row isn't too short
-                    if cross_idx_bottom > 2:
-                        # if the next two rows are the same length
-                        if row_width[1] in [np.sum(grid[index+2]), 0]:
-                            if TminusB < 0:
+                    if cross_idx_bottom > 2: #36 or bigger
+                        if not top_bigger:
+                            if np.sum(grid[index+2]) in [row_width[1], 0]:
                                 # shorten end of row 0 by 1 crossover
                                 row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
-                                row0 = modify_lattice_row(row0, row0_diff, "onlyright")
-                            # elif TminusB > 0:
-                            # shorten end of row 1 by 1 crossover
-                            row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
-                            row1 = modify_lattice_row(row1, row1_diff, "onlyleft")
+                                row0 = modify_lattice_row(row0, row0_diff, "onlyright") 
+                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1 = modify_lattice_row(row1, row1_diff, "onlyleft")
+                            else:
+                                pass
+                        elif top_bigger:
+                            if np.sum(grid[index+2]) in [row_width[1], 0]:
+                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1 = modify_lattice_row(row1, row1_diff, "onlyleft")
+                            else:
+                                pass
+                    elif cross_idx_bottom == 2: #25
+                        if not top_bigger:
+                            pass # DONT SHORTEN row0, just shift
+                        elif top_bigger:
+                            pass
 
-                # shift start of row 1 to line up with end of row 0
+                    elif cross_idx_bottom == 1: #16
+                        if not top_bigger:
+                            # row 16 --> 5
+                            row1_diff = poss_cross[cross_idx_top] - row_width[1]
+                            row1 = modify_lattice_row(row1, row1_diff, "onlyleft")
+                        elif top_bigger:
+                            pass
+                    elif cross_idx_bottom == 0:
+                        if not top_bigger:
+                            pass #just shift
+                        elif top_bigger:
+                            pass 
+                            
+
+                # shift end of row 1 to line up with start of row 0
                 row1_roll = right0 - right1 + row0_diff
                 row1 = np.roll(row1, row1_roll)
             elif not R:
-                extra_turns_left = int(round(abs(left1-left0) / self.bp_per_turn, 2))
+                extra_turns_left = int(round(abs(left1-left0) / self.bp_per_turn, 0))
                 if abs(extra_turns) > 1:
-                    
-                    if TminusB < 0:
+                    print(left1-left0, self.bp_per_turn)
+                    if not top_bigger:
                         # shorten the end of row 0
                         row0_diff = poss_cross[cross_idx_bottom - extra_turns_left] - row_width[0] 
                     else:
                         # lengthen the end of row 0
-                        row0_diff = poss_cross[cross_idx_bottom + extra_turns_left]-row_width[0] 
+                        row0_diff = poss_cross[cross_idx_bottom + extra_turns_left] - row_width[0] 
 
                     row0 = modify_lattice_row(row0, row0_diff, "onlyleft")
 
                 elif abs(extra_turns) == 1:
                     # if the row isn't too short
-                    if cross_idx_bottom > 2: 
-                        # if the next two rows are the same length
-                        if row_width[1] in [np.sum(grid[index+2]), 0]:
-                            if TminusB < 0:
+                    if cross_idx_bottom > 2:
+                        if not top_bigger:
+                            if np.sum(grid[index+2]) in [row_width[1], 0]:
+                                print("visited left extra turn one, smaller row1, shortening now")
                                 # shorten end of row 0 by 1 crossover
                                 row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                                 row0 = modify_lattice_row(row0, row0_diff, "onlyleft") 
-                            # elif TminusB > 0:
-                            row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1 = modify_lattice_row(row1, row1_diff, "onlyright")
+                            else:
+                                pass
+                        elif top_bigger:
+                            if np.sum(grid[index+2]) in [row_width[1], 0]:
+                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1 = modify_lattice_row(row1, row1_diff, "onlyright")
+                            else:
+                                pass
+                    elif cross_idx_bottom == 2: #25
+                        if not top_bigger:
+                            
+                            pass # DONT SHORTEN row0, just shift
+                        elif top_bigger:
+                            pass
+                    elif cross_idx_bottom == 1: #16
+                        if not top_bigger:
+                            # row 16 --> 5
+                            row1_diff = poss_cross[cross_idx_top] - row_width[1]
                             row1 = modify_lattice_row(row1, row1_diff, "onlyright")
+                        elif top_bigger:
+                            pass
 
+                # shift end of row 1 to line up with start of row 0
                 row1_roll = left0 - left1 - row0_diff
                 row1 = np.roll(row1, row1_roll)
 
