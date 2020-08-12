@@ -97,15 +97,18 @@ def find_closest(myList, myNumber):
         return before + 1
 
 
-def modify_lattice_row(grid: np.ndarray, difference: np.ndarray):
+def modify_lattice_row(grid: np.ndarray, difference: np.ndarray or List, change_side: str = "yes"):
     """
     Modifies the lattice sites for a given row in the `grid` by 
     adding or removing the number of sites equal to the value which 
     is stored in `difference` for that row
 
     Arguments:
-        grid --- (n, x) numpy array
+        grid --- (n, x) numpy array of 1's and 0's
         difference --- (n, 1) numpy array
+        change_side --- ("Yes") otherwise "onlyleft" or "onlyright"
+        arguments can be given, where adjustments will only be made
+        on the prescribed side
     
     e.g. a difference of -5 or +11, remove (1 -> 0) or add (0 -> 1) 
     to the lattice row, respectively. Each removal/addition occurs on 
@@ -113,12 +116,32 @@ def modify_lattice_row(grid: np.ndarray, difference: np.ndarray):
     
 
     """
-    # For the difference required to reach a certain no. of nucleotides on each row
+    # Alternate between left and right
+    sides = {"left": "right", "right": "left","onlyleft":"left", "onlyright":"right"}
+    change_side = change_side.lower()
+    message = "change_side can only have the following values: \n'yes', \n'onlyleft', \n'onlyright'"
+    assert change_side in ("yes", "onlyleft", "onlyright"), message
 
+    if not isinstance(difference, np.ndarray):
+        try:
+            difference = np.array([difference])
+        except TypeError:
+            raise TypeError(f"Difference needs to be given as a list, not {type(difference)}")
+    
+    if len(np.shape(grid)) != 2:
+        try:
+            grid = np.array([grid])
+            assert len(np.shape(grid)) == 2
+        except TypeError:
+            raise TypeError("The value hasn't been given as a list or a np.ndarray")
+
+    # For the difference required to reach a certain no. of nucleotides on each row
     for row, value in enumerate(difference):
-        # Alternate between left and right
-        sides = {"left": "right", "right": "left"}
-        side = "left"  # begin at the left side
+        if change_side == "yes":
+            side = "left"  # begin at the left side
+        else:
+            side = sides[change_side]
+
         while value != 0:
             # find location first/last 1 in the grid
             # i.e. one_right = x-coord (x location of the last 1 from the right)
@@ -140,9 +163,12 @@ def modify_lattice_row(grid: np.ndarray, difference: np.ndarray):
                 else:
                     grid[row, one_right] = 0
                 value += 1
-            side = sides[side]  # change left -> right OR right -> left
+
+            if change_side == "yes":
+                side = sides[side]  # change left -> right OR right -> left
 
     return grid
+
 
 
 class Lattice:
@@ -234,17 +260,21 @@ class Lattice:
     @property
     def quantise_array_rows(self):  # Returns array
         """
-        Adjust each row to contain a multiple of 32 scaffold sites
-        Values are rounded up OR down to the closest multiple
+        Adjust each row to contain scaffold sites where the first and last
+        site correlate to a position where the crossover occurs.
+        Values are rounded up OR down to the closest half turn location.
+
+        i.e. a row of length 9 will round down to 5 lattice sites
+        or 43 will round up to 46
         """
         grid = deepcopy(self.intersect_array)
 
         # Find possible crossover locations
         max_width = np.shape(grid)[1]
-        poss_cross = find_crossover_locations(max_width)
+        self.poss_cross = find_crossover_locations(max_width)
 
         # Add a border of 16 0's around the lattice
-        grid = np.pad(grid, pad_width=16, mode="constant", constant_values=0)
+        grid = np.pad(grid, pad_width=40, mode="constant", constant_values=0)
 
         # Find the number of nucleotide sites per row and store in a numpy array
         nt_per_row = []
@@ -252,9 +282,14 @@ class Lattice:
             nt_per_row.append(np.sum(grid[row]))
         nt_per_row = np.array(nt_per_row)
 
-        closest_crossover = lambda x: find_closest(poss_cross, x)
-        nt_per_row_round = np.array(list(map(closest_crossover, nt_per_row)))
-        nt_per_row_diff = nt_per_row_round - nt_per_row
+        # Find closest crossover and modify rows ensure first/last sites are crossover sites
+
+        # values 1-4 round up
+        nt_per_row_round_1 = [5 if 0 < i < 5 else i for i in nt_per_row]
+        # other values round to closest half turn 
+        closest_crossover = lambda x: find_closest(self.poss_cross, x)
+        nt_per_row_round_2 = np.array(list(map(closest_crossover, nt_per_row_round_1)))
+        nt_per_row_diff = nt_per_row_round_2 - nt_per_row
 
         grid = modify_lattice_row(grid, nt_per_row_diff)
 
@@ -264,7 +299,7 @@ class Lattice:
     def straight_edge_array(self):
         """
         Algorithm to straighten out edges of the lattice
-        - achieved by shifting each row to begin at a multiple of 16
+        - achieved by shifting each row to begin at a multiple of "sf" straightening_factor
         """
         grid = deepcopy(self.quantise_array_rows)
 
@@ -286,13 +321,131 @@ class Lattice:
         return grid
 
     @property
+    def align_rows_array(self):
+        """
+        Algorithm to ensure every row connects to the next
+        """
+        grid = deepcopy(self.straight_edge_array)
+        # half turn nt sizes [5,16,26,37,47, etc] instead of half turn indexes [0,4,15, etc]
+        poss_cross = np.add(self.poss_cross[1:],1)
+
+        for index in range(np.shape(grid)[0]-1):
+
+            row0 = grid[index] 
+            row1 = grid[index+1]
+            row_width = [np.sum(row0),np.sum(row1)]
+            if 0 in row_width: continue # just to bext index loop
+            
+            # ensure the rows aren't too small, only shift them or add values
+            for i, width in enumerate(row_width):
+                if width == 5: print(f"Row {index} + {i} is the smallest it can be")
+            
+            # for 0,2,4 etc -> R = True, otherwise R = None
+            R = True if index % 2 == 0 else None
+
+            # calculate current difference between end/start points of row0 & row1
+            if R:
+                right0 = int(np.argwhere(row0)[-1])
+                right1 = int(np.argwhere(row1)[-1])
+                if right0-right1 == 0: continue
+                assert right0-right1 != 0
+            else:
+                left0 = int(np.argwhere(row0)[0])
+                left1 = int(np.argwhere(row1)[0])
+                if left0-left1 == 0: continue
+                assert left0 - left1 != 0
+            
+
+            # find index in poss_cross correlating to no. of possible crossovers in that row
+            cross_idx_bottom = bisect_left(poss_cross, row_width[0])
+            cross_idx_top = bisect_left(poss_cross, row_width[1])             
+            TminusB = row_width[1]-row_width[0]
+            row0_diff = 0
+            extra_turns = cross_idx_bottom - cross_idx_top # in whole row
+
+            # Same size rows, just shift them left or right
+            if TminusB == 0:
+                if R:
+                    row1_roll = right0 - right1
+                else:
+                    row1_roll = left0 - left1    
+                row1 = np.roll(row1, row1_roll)          
+            
+            elif R:
+                extra_turns_right = int(round(abs(right1-right0) / self.bp_per_turn, 2))
+                if abs(extra_turns) > 1:
+                    
+                    if TminusB < 0:
+                        # shorten the end of row 0
+                        row0_diff = poss_cross[cross_idx_bottom - extra_turns_right] - row_width[0]
+                    else:
+                        # lengthen the end of row 0
+                        row0_diff = poss_cross[cross_idx_bottom + extra_turns_right] - row_width[0] 
+                    
+                    row0 = modify_lattice_row(row0, row0_diff, "onlyright")
+
+                elif abs(extra_turns) == 1:
+                    #if the row isn't too short
+                    if cross_idx_bottom > 2:
+                        # if the next two rows are the same length
+                        if row_width[1] in [np.sum(grid[index+2]), 0]:
+                            if TminusB < 0:
+                                # shorten end of row 0 by 1 crossover
+                                row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
+                                row0 = modify_lattice_row(row0, row0_diff, "onlyright")
+                            # elif TminusB > 0:
+                            # shorten end of row 1 by 1 crossover
+                            row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                            row1 = modify_lattice_row(row1, row1_diff, "onlyleft")
+
+                # shift start of row 1 to line up with end of row 0
+                row1_roll = right0 - right1 + row0_diff
+                row1 = np.roll(row1, row1_roll)
+            elif not R:
+                extra_turns_left = int(round(abs(left1-left0) / self.bp_per_turn, 2))
+                if abs(extra_turns) > 1:
+                    
+                    if TminusB < 0:
+                        # shorten the end of row 0
+                        row0_diff = poss_cross[cross_idx_bottom - extra_turns_left] - row_width[0] 
+                    else:
+                        # lengthen the end of row 0
+                        row0_diff = poss_cross[cross_idx_bottom + extra_turns_left]-row_width[0] 
+
+                    row0 = modify_lattice_row(row0, row0_diff, "onlyleft")
+
+                elif abs(extra_turns) == 1:
+                    # if the row isn't too short
+                    if cross_idx_bottom > 2: 
+                        # if the next two rows are the same length
+                        if row_width[1] in [np.sum(grid[index+2]), 0]:
+                            if TminusB < 0:
+                                # shorten end of row 0 by 1 crossover
+                                row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
+                                row0 = modify_lattice_row(row0, row0_diff, "onlyleft") 
+                            # elif TminusB > 0:
+                            row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                            row1 = modify_lattice_row(row1, row1_diff, "onlyright")
+
+                row1_roll = left0 - left1 - row0_diff
+                row1 = np.roll(row1, row1_roll)
+
+        
+            
+            # UPDATE ROWS IN GRID
+            grid[index] = row0
+            grid[index+1] = row1
+
+        return grid
+
+    @property
     def final_array(self):
         """
         Returns lattice points as an array of 1's and 0's
 
         1's represent lattice sites where scaffold can be placed
         """
-        return self.straight_edge_array
+        return self.align_rows_array
 
     @property
     def final_coords(self):
@@ -303,10 +456,6 @@ class Lattice:
         y_max = np.argwhere(grid)[:, 0].max()
         x_min = np.argwhere(grid)[:, 1].min()
         x_max = np.argwhere(grid)[:, 1].max()
-        print(
-            "Converted binary to coords, the xy bounds are: \n"
-            f"x: {x_min}, {x_max}. y: {y_min}, {y_max}."
-        )
 
         grid = grid[y_min : y_max + 1, x_min : x_max + 1]
         lattice = np.argwhere(grid)
@@ -316,13 +465,9 @@ class Lattice:
 
     def get_crossovers(self):
         """ Returns a binary array, where 1 represents a potential crossover location"""
-        grid = deepcopy(self.straight_edge_array)
+        grid = deepcopy(self.final_array)
         # copy the size of grid but fill it with zeros
         crossovers_array = np.zeros(np.shape(grid))
-
-        max_width = np.shape(grid)[1]
-        possible_crossovers = find_crossover_locations(max_width)
-        print("Possible Crossovers", possible_crossovers)
 
         sides = {"left": "right", "right": "left"}
         side = "left"  # begin at the left side
@@ -332,12 +477,11 @@ class Lattice:
             if lattice_sites == 0:  # i.e. when row is just padding
                 continue
 
-            # find x of first lattice site in the row
+            # find x of first/last lattice site in the row
             left_bound = np.argwhere(grid[row])[0]
-            # find x of the last lattice site in the row
             right_bound = np.argwhere(grid[row])[-1]
 
-            for bp in possible_crossovers:
+            for bp in self.poss_cross:
                 if bp > lattice_sites:
                     continue
                 if side == "left":
@@ -386,6 +530,7 @@ class Lattice:
         vertices_in_route = int(crossovers_per_row * lattice_rows)
         vertex_list = np.zeros((vertices_in_route, 3))
 
+        # Find final crossover from left or right and make it a node
         for row in range(0, lattice_rows):
             vertex_index_L = bisect_left(coords[:, 1], row)
             vertex_index_R = bisect_right(coords[:, 1], row) - 1
@@ -395,6 +540,8 @@ class Lattice:
             else:  # if odd
                 vertex_list[row * 2] = coords[vertex_index_R]
                 vertex_list[row * 2 + 1] = coords[vertex_index_L]
+
+        print(vertex_list)
 
         node_list = [LatticeNode(i) for i in vertex_list]
         return LatticeRoute(node_list, *args, **kwargs)
@@ -503,7 +650,7 @@ star = np.array(
 
 if __name__ == "__main__":
     polygon = square * 10
-    lattice = Lattice(polygon, straightening_factor=4)
+    lattice = Lattice(polygon, straightening_factor=5)
     # lattice.plot(lattice.adjusted_array, fout="Unstraightened")
     # lattice.plot(lattice.adjusted_coords, fout="polygonCoords")
     # lattice.plot(lattice.final_coords)
