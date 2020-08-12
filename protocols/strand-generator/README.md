@@ -8,4 +8,4 @@ A function that takes care of this for us is stored as `oxdna.strand.generate_he
 
 ## Usage
 
-```python main.py```
+```python main.py -n <strand_length> [--double]```
