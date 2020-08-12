@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from typing import List
+import warnings
 
 from .utils import get_rotation_matrix
 
@@ -83,6 +84,7 @@ class Nucleotide:
         self._a3 = a3
         self._v = v
         self._L = L
+        self._across = None
 
         # make sure that the a1 and a3 vectors are orthogonal
         assert np.dot(self._a1, self._a3) == 0.0
@@ -215,8 +217,33 @@ class Nucleotide:
             }
         )
 
+    @property
+    def across(self) -> int:
+        if self._across:
+            return self._across.index
+        else:
+            return -1
+
+    @across.setter
+    def across(self, nucleotide : "Nucleotide"):
+        if nucleotide == None:
+            self._across = None
+            return
+
+        if not isinstance(nucleotide, type(self)):
+            raise TypeError(f"Set Nucleotide.across with a Nucleotide instance, you're "
+                  f"using a {type(nucleotide)} instance")
+        if self._across:
+            warnings.warn(
+                f"Setting across {nucleotide} with index {nucleotide.index}"
+                f" when this nucleotide (index={self.index}) already has an"
+                f" across nucleotide: {self._across} (index={self._across.index})!"
+            )
+            self._across.across = None
+        self._across = nucleotide
+
     def make_3p(base: str) -> "Nucleotide":
-        return
+        raise NotImplementedError
 
     def make_5p(
         self, 
@@ -261,9 +288,19 @@ class Nucleotide:
         
         A Nucleotide across (aka complementary)
         """
+        if self._across:
+            warnings.warn(
+                f"Using Nucleotide.make_across when this nucleotide "
+                f"(index={self.index}) already has an across nucleotide: "
+                f"{self._across} (index={self._across.index})!"
+            )
+            self._across.across = None
         a1 = -self._a1
         a3 = -self._a3
         pos_com = self.pos_com - a1 * 2 * (SHIFT_BASE + SHIFT_ACROSS)
-        return Nucleotide(ACROSS[self._base], pos_com, a1, a3)
+        nucleotide = Nucleotide(ACROSS[self._base], pos_com, a1, a3)
+        nucleotide.across = self
+        self.across = nucleotide
+        return nucleotide
 
 
