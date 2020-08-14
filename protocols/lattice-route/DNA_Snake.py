@@ -28,6 +28,7 @@ def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = "c
 if __name__ == "__main__":
     square = np.array([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 4.0, 0.0], [0.0, 4.0, 0.0]])
     trap = np.array([[0.,0.,0.],[1.5,6.,0.],[8.5,6.,0.],[10.,0.,0.]])
+    trapREV = np.array([[0.,10.,0.],[2.5,4.,0.],[7.5,4.,0.],[10.,10.,0.]])
     no = 0.85
     hexagon = np.array(
         [[0, 1, 0], [no, 0.5, 0], [no, -0.5, 0], [0, -1, 0], [-no, -0.5, 0], [-no, 0.5, 0]])  
@@ -39,7 +40,8 @@ if __name__ == "__main__":
 
     lattice = generate(square, DNAout=None, PLOTout="square_con")
     lattice = generate(trap*2, DNAout=None, PLOTout="trap_con")
-    lattice = generate(hexagon*10, DNAout=None, PLOTout="hex_con")
-    lattice = generate(plus*10, DNAout=None, PLOTout="plus_con")
-    lattice = generate(diamond*[10,5,0], DNAout=None, PLOTout="diam_con")
+    lattice = generate(hexagon*12, DNAout=None, PLOTout="hex_con")
+    lattice = generate(plus*6, DNAout=None, PLOTout="plus_con")
+    lattice = generate(diamond*[10,7,0]*3.2, DNAout=None, PLOTout="diam_con")
+    lattice = generate(trapREV*5, DNAout=None,PLOTout="trapREV_con")
 
