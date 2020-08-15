@@ -12,12 +12,11 @@ ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = "connected"):
     polygon = BoundaryPolygon(polygon_vertices)
-    lattice = polygon.lattice(straightening_factor=5)
-    lattice.plot(lattice.final_coords, fout=PLOTout)
-    # lattice.plot(lattice.final_array, fout="straightedge")
+    lattice = polygon.lattice(straightening_factor=5, start_side="left")
+    lattice.plot(lattice.final_coords, fout=PLOTout, poly = False, lattice_points= True)
 
-    # route = lattice.route()
-    # route.plot()
+    route = lattice.route()
+    route.plot()
 
     if DNAout:
         system= route.system()
@@ -36,12 +35,14 @@ if __name__ == "__main__":
         [1.,0.,0.], [2.,0.,0.], [2.,1.,0.], [3.,1.,0.], [3.,2.,0.], [2.,2.,0.],
         [2.,3.,0.], [1.,3.,0.], [1.,2.,0.], [0.,2.,0.], [0.,1.,0.], [1.,1.,0.]])
     diamond = np.array([[1.,0.,0.],[2.,1.,0.],[1.,2.,0.],[0.,1.,0.]])
+    triangle = np.array([[0,0,0],[5,9,0],[10,0,0]])
 
 
     lattice = generate(square, DNAout=None, PLOTout="square_con")
     lattice = generate(trap*2, DNAout=None, PLOTout="trap_con")
-    lattice = generate(hexagon*12, DNAout=None, PLOTout="hex_con")
+    lattice = generate(hexagon*18, DNAout=None, PLOTout="hex_con")
     lattice = generate(plus*6, DNAout=None, PLOTout="plus_con")
-    lattice = generate(diamond*[10,7,0]*3.2, DNAout=None, PLOTout="diam_con")
+    lattice = generate(diamond*20, DNAout=None, PLOTout="diam_con")
     lattice = generate(trapREV*5, DNAout=None,PLOTout="trapREV_con")
+    lattice = generate(triangle*4, DNAout=None,PLOTout="triangle")
 
