@@ -180,7 +180,7 @@ def side(row_no: int, R: bool = None):
             (0, True):"onlyright", 
             (1,None):"onlyright",
             (1,True):"onlyleft"}
-    return dict[(row_no, R)]    
+    return dict[(row_no, R)]
 
 def all_same(items):
     return all(x == items[0] for x in items)
@@ -192,14 +192,8 @@ class Lattice:
         grid_size: List[float] = [POS_STACK, 1.00],
         bp_per_turn: float = 10.45,
         straightening_factor: int = 8,
+        start_side = "left"
     ):
-        self.polygon_array = polygon_vertices.astype(dtype=np.float64)
-        self.polygon = geometry.Polygon(polygon_vertices)
-        self.grid_size = grid_size
-        self.x_spacing = grid_size[0]
-        self.y_spacing = grid_size[1]
-        self.bp_per_turn = bp_per_turn
-        self.straightening_factor = straightening_factor
         """
         Lattice class forms a set of points given a polygon where a DNA Origami Scaffold
         can be laid.
@@ -212,6 +206,17 @@ class Lattice:
         x_spacing --- (default = 0.34) the x distance between each site in the coordinate grid
         y_spacing --- (default = 1.00) the y distance between each site in the coordinate grid
         """
+        self.polygon_array = polygon_vertices.astype(dtype=np.float64)
+        self.polygon = geometry.Polygon(polygon_vertices)
+        self.grid_size = grid_size
+        self.x_spacing = grid_size[0]
+        self.y_spacing = grid_size[1]
+        self.bp_per_turn = bp_per_turn
+        self.straightening_factor = straightening_factor
+        self.padding = 40
+        self.start_side = start_side.lower()
+        
+        assert self.start_side in ["left","right"], "start_side must be: 'left' or 'right'"
 
     @property
     def intersect_polygon(self):  # Returns coordinates
@@ -285,10 +290,10 @@ class Lattice:
 
         # Find possible crossover locations
         max_width = np.shape(grid)[1]
-        self.poss_cross = find_crossover_locations(max_width+40)
+        self.poss_cross = find_crossover_locations(max_width+self.padding)
 
         # Add a border of 16 0's around the lattice
-        grid = np.pad(grid, pad_width=40, mode="constant", constant_values=0)
+        grid = np.pad(grid, pad_width=self.padding, mode="constant", constant_values=0)
 
         # Find the number of nucleotide sites per row and store in a numpy array
         nt_per_row = []
@@ -345,18 +350,25 @@ class Lattice:
         poss_cross = np.add(self.poss_cross[1:],1)
         width_tracker = []
 
-        for index in range(np.shape(grid)[0]-2):
+        for index in range(np.shape(grid)[0]-3):
 
             row0 = grid[index] 
             row1 = grid[index+1]
             row2 = grid[index+2]
-            row_width = [np.sum(row0),np.sum(row1), np.sum(row2)]
+            row3 = grid[index+3]
+            row_width = [np.sum(row0),np.sum(row1), np.sum(row2), np.sum(row3)]
             width_tracker.append(int(row_width[0]))
             if 0 in row_width[0:2]: continue # just to bext index loop
             
+            # R represents the side where the first crossover occurs
+            # Hence, if self.start_side = "left"
             # for 0,2,4 etc -> R = True, otherwise R = None
-            R = True if index % 2 == 0 else None
-
+            
+            if self.start_side == "left":
+                R = True if index % 2 == 0 else None
+            else:
+                R = None if index % 2 == 0 else True
+            print(self.start_side, index, R)
             # calculate current difference between end/start points of row0 & row1
             if R:
                 right0 = int(np.argwhere(row0)[-1])
@@ -372,7 +384,7 @@ class Lattice:
             ### Initialise some useful values
             # find index in poss_cross correlating to no. of possible crossovers in that row
             cross_idx_bottom = bisect_left(poss_cross, row_width[0])
-            cross_idx_top = bisect_left(poss_cross, row_width[1])             
+            cross_idx_top = bisect_left(poss_cross, row_width[1])
             TminusB = row_width[1]-row_width[0]
             top_bigger = True if TminusB > 0 else False
             extra_turns = cross_idx_bottom - cross_idx_top # in whole row
@@ -391,13 +403,13 @@ class Lattice:
                     extra_turns_right = int(round(abs(right1-right0) / self.bp_per_turn, 0))
                     if not top_bigger:
                         # shorten the end of row 0
-                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-2:-1]):
+                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                         else:
                             row0_diff = poss_cross[cross_idx_bottom - extra_turns_right] - row_width[0]
                     else:
                         # lengthen the end of row 0
-                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-2:-1]):
+                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom + 1] - row_width[0]
                         else:
                             row0_diff = poss_cross[cross_idx_bottom + extra_turns_right] - row_width[0] 
@@ -407,13 +419,13 @@ class Lattice:
                     extra_turns_left = int(round(abs(left1-left0) / self.bp_per_turn, 0))
                     if not top_bigger:
                         # shorten the end of row 0
-                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-2:-1]):
+                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                         else:
                             row0_diff = poss_cross[cross_idx_bottom - extra_turns_left] - row_width[0] 
                     else:
                         # lengthen the end of row 0
-                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-2:-1]):
+                        if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom + 1] - row_width[0]
                         else:
                             row0_diff = poss_cross[cross_idx_bottom + extra_turns_left] - row_width[0] 
@@ -428,49 +440,49 @@ class Lattice:
                     row1 = np.roll(row1, row1_roll)
 
             elif abs(extra_turns) == 1:
-                if cross_idx_top > 5:
-                    if not top_bigger:
-                        # remove 1 from row1 -> so shapes are less skewed
-                        row1_diff = poss_cross[cross_idx_top + 1 ] - row_width[1]
-                        row1 = modify_lattice_row(row1, row1_diff, side(1,R)) 
-                    elif top_bigger:
-                        # add 1 to row1 -> so shapes are less skewed
-                        row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
-                        row1 = modify_lattice_row(row1, row1_diff, side(1,R)) 
+                if cross_idx_bottom >= 1: #16 or bigger            
+                    if top_bigger:
+                        # bigger shapes
+                        if cross_idx_top > 5: 
+                            # remove 1 to row1 -> so shapes are less skewed
+                            row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                            row1 = modify_lattice_row(row1, row1_diff, side(1,R)) 
 
+                        # if the next 2 rows are equal and the past few rows were bigger than row0
+                        elif row_width[2] in [row_width[1], 0]:
+                            if max(width_tracker[-3:-1]) >= row_width[0]:
+                                # shorten row1 by 1 crossover
+                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
+                                row1 = modify_lattice_row(row1, row1_diff, side(1,R))        
+                    
+                    elif not top_bigger:
+                        if cross_idx_top > 5: # bigger shapes
+                            # add 1 from row1 -> so bigger shapes are less skewed
+                            row1_diff = poss_cross[cross_idx_top + 1 ] - row_width[1]
+                            row1 = modify_lattice_row(row1, row1_diff, side(1,R)) 
 
-                elif cross_idx_bottom >= 1: #16 or bigger
-                    print("we here", index-39)
-                    if not top_bigger:
-                        # where the last few 2 have been equal and the next 2 rows are equal (or equal to 0)
-                        if min(width_tracker[-2:-1]) in [max(width_tracker[-2:-1]),0]:
-                            if row_width[2] in [row_width[1], 0] and row_width[2] >= poss_cross[cross_idx_top]:
-                                # shorten end of row 0 by 1 crossover
+                        # where the last 2 rows have been equal and the next 3 rows are equal (or equal to 0)
+                        elif min(width_tracker[-3:-1]) in [max(width_tracker[-3:-1]),0]:
+                            if row_width[3] == row_width[2] == row_width[1] or row_width[3] == row_width[2] == 0:  
+                                # shorten ends of row 0/1 by 1 crossover
                                 row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                                 row0 = modify_lattice_row(row0, row0_diff, side(0,R)) 
                                 row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
                                 row1 = modify_lattice_row(row1, row1_diff, side(1,R))
                             else:
                                 pass
-                    elif top_bigger:
-                        # if the next 2 rows are equal and the past few rows were bigger than row0
-                        if row_width[2] in [row_width[1], 0]:
-                            if max(width_tracker[-2:-1]) >= row_width[0]:
-                                # shorten row1 by 1 crossover
-                                row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
-                                row1 = modify_lattice_row(row1, row1_diff, side(1,R))
+
 
                 elif cross_idx_bottom == 0: #5
-                    if not top_bigger:
-                        pass #just shift
-                    elif top_bigger:
+                    if top_bigger:
                         if row_width[2] < row_width[1]:
                             # row 1: 16 --> 5
                             row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
                             row1 = modify_lattice_row(row1, row1_diff, side(1,R))
-                        else:
-                            pass 
-                            
+                    elif not top_bigger:
+                        #just shift
+                        pass
+
 
                 if R:
                     row1_roll = right0 - right1 + row0_diff
@@ -517,7 +529,7 @@ class Lattice:
         crossovers_array = np.zeros(np.shape(grid))
 
         sides = {"left": "right", "right": "left"}
-        side = "left"  # begin at the left side
+        side = self.start_side  # begin at the left / rightside
         for row in range(np.shape(grid)[0]):
             # to account for padding, calc no. of lattice sites on row
             lattice_sites = np.sum(grid[row])
@@ -551,10 +563,6 @@ class Lattice:
         y_max = np.argwhere(crossovers)[:, 0].max()
         x_min = np.argwhere(crossovers)[:, 1].min()
         x_max = np.argwhere(crossovers)[:, 1].max()
-        print(
-            "Converted crossover binary to coords, the xy bounds are: \n"
-            f"x: {x_min}, {x_max}. y: {y_min}, {y_max}."
-        )
 
         crossovers = crossovers[y_min : y_max + 1, x_min : x_max + 1]
         coords = np.argwhere(crossovers)
@@ -616,7 +624,7 @@ class Lattice:
             # flip
             polygon[:, 1] = polygon[:, 1].max() - polygon[:, 1]
             # add padding to match
-            polygon += [16, 16, 0]
+            polygon += [self.padding, self.padding, 0]
 
         ax.plot(polygon[:, 0], polygon[:, 1], "r-")
 
@@ -635,7 +643,7 @@ class Lattice:
             cmap = plt.get_cmap("cool")
             ax.imshow(crossovers[::-1], cmap)
 
-    def plot(self, lattice: np.ndarray, ax: plt.Axes = None, fout: str = None):
+    def plot(self, lattice: np.ndarray, ax: plt.Axes = None, fout: str = None, poly = True, cross = True, lattice_points = True):
 
         nodes = np.array(lattice)
         if not ax:
@@ -650,17 +658,22 @@ class Lattice:
 
         if np.shape(nodes)[1] == 2:
             print("Plotting from coords")
-            ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
-            self.plotPolygon(ax, nodes, coords=True)
-            self.plotCrossovers(ax, coords=True)
+            if lattice_points:
+                ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
+            if poly:
+                self.plotPolygon(ax, nodes, coords=True)
+            if cross:
+                self.plotCrossovers(ax, coords=True)
             ax.set_title("Lattice plotted from coords")
 
         else:
-            print("Plotting from array")
             cmap = plt.get_cmap("hot")
-            ax.imshow(nodes[::-1], cmap)
-            self.plotPolygon(ax, nodes, coords=False)
-            self.plotCrossovers(ax, coords=False)
+            if lattice_points:
+                ax.imshow(nodes[::-1], cmap)
+            if poly:
+                self.plotPolygon(ax, nodes, coords=False)
+            if cross:
+                self.plotCrossovers(ax, coords=False)
             ax.set_title("Lattice plotted from array")
 
         plt.gca().set_aspect(5)
@@ -669,7 +682,7 @@ class Lattice:
         
         if not ax:
             plt.show()
-
+    
 
 square = np.array([[0, 0, 0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
 trapezium = np.array([[0, 0, 0], [1.0, 10.0, 0.0], [12.0, 10.0, 0.0], [13.0, 0.0, 0.0]])
