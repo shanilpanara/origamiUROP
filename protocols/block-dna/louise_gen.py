@@ -12,6 +12,8 @@ from fiona_gen import generate_system
 from origamiUROP.oxdna import System
 
 
+sim_nb = 1
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-n', '--number', type=int, nargs=3, required=True)
@@ -25,4 +27,4 @@ if __name__ == '__main__':
         args.single_stranded[0]
     )
     if args.output_prefix:
-        system.write_oxDNA_folder(1,args.output_prefix)
+        system.write_oxDNA_folder(sim_nb,args.output_prefix)
