@@ -7,6 +7,9 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import pathlib
+import os
+
 from origamiUROP.oxdna import Strand, Nucleotide
 
 CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
@@ -168,6 +171,30 @@ class System:
             f.write(oxDNA_string(self.configuration))
 
         with open(f"oxnda.{prefix}.top", "w") as f:
+            f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
+            f.write(oxDNA_string(self.topology))
+    
+    def write_oxDNA_folder(self, sim_nb, prefix: str = "out"):
+        """
+        Creates one folder to contain the configuration file and topology 
+        file required to run a simulation using oxDNA
+        Parameters:
+            sim_nb : integer
+            prefix ('out') : prefix to output files
+        """
+        pathname = "oxDNA_sims/sim" + "{:.0f}".format(sim_nb)
+        filename1 = "oxdna.{prefix}.conf"
+        filename2 = "oxnda.{prefix}.top"
+        
+        pathlib.Path(pathname).mkdir(parents=True, exist_ok=True) 
+        
+        with open(os.path.join(pathname, filename1), "w") as f:
+            f.write(f"t = {self.time}\n")
+            f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
+            f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
+            f.write(oxDNA_string(self.configuration))
+
+        with open(os.path.join(pathname, filename2), "w") as f:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
