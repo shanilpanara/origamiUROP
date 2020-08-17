@@ -199,10 +199,6 @@ class System:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
-        with open (os.path.join(pathname,"filetest"), "w") as f:
-            f.write(filename1)
-            f.write(filename2)
-
     def write_LAMMPS(self, prefix : str = 'out'):
         """
         Writes lammps.*.conf which is a configuration data
