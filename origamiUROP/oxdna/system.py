@@ -185,6 +185,7 @@ class System:
         pathname = "oxDNA_sims/sim" + "{:.0f}".format(sim_nb)
         filename1 = f"oxdna.{prefix}.conf"
         filename2 = f"oxnda.{prefix}.top"
+        print(filename1)
         
         pathlib.Path(pathname).mkdir(parents=True, exist_ok=True) 
         
