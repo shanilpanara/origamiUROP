@@ -5,9 +5,12 @@ class
 import numpy as np
 import pandas as pd
 from typing import List
-from origamiUROP.oxdna import Nucleotide
 import re
+import random
 from copy import deepcopy
+
+from .nucleotide import Nucleotide
+from .utils import get_rotation_matrix
 
 # Constants
 PI = np.pi
@@ -29,58 +32,6 @@ number_to_base = {0: "A", 1: "G", 2: "C", 3: "T"}
 base_to_number = {"A": 0, "G": 1, "C": 2, "T": 3}
 
 
-def get_rotation_matrix(axis, anglest):
-    """
-    Copied from https://github.com/rgatkinson/oxdna/blob/master/UTILS/utils.py 
-    The argument anglest can be either an angle in radiants
-    (accepted types are float, int or np.float64 or np.float64)
-    or a tuple [angle, units] where angle a number and
-    units is a string. It tells the routine whether to use degrees,
-    radiants (the default) or base pairs turns
-    axis --- Which axis to rotate about
-        Ex: [0,0,1]
-    anglest -- rotation in radians OR [angle, units]
-        Accepted Units:
-            "bp"
-            "degrees"
-            "radiants"
-        Ex: [np.pi/2] == [np.pi/2, "radians"]
-        Ex: [1, "bp"]
-    """
-    if not isinstance(anglest, (np.float64, np.float32, float, int)):
-        if len(anglest) > 1:
-            if anglest[1] in ["degrees", "deg", "o"]:
-                angle = (np.pi / 180.0) * anglest[0]
-                # angle = np.deg2rad (anglest[0])
-            elif anglest[1] in ["bp"]:
-                # Allow partial bp turns
-                angle = float(anglest[0]) * (np.pi / 180.0) * 35.9
-                # angle = int(anglest[0]) * (np.pi / 180.) * 35.9
-                # Older versions of numpy don't implement deg2rad()
-                # angle = int(anglest[0]) * np.deg2rad(35.9)
-            else:
-                angle = float(anglest[0])
-        else:
-            angle = float(anglest[0])
-    else:
-        angle = float(anglest)  # in degrees, I think
-
-    axis = np.array(axis)
-    axis /= np.sqrt(np.dot(axis, axis))
-    ct = np.cos(angle)
-    st = np.sin(angle)
-    olc = 1.0 - ct
-    x, y, z = axis
-
-    return np.array(
-        [
-            [olc * x * x + ct, olc * x * y - st * z, olc * x * z + st * y],
-            [olc * x * y + st * z, olc * y * y + ct, olc * y * z - st * x],
-            [olc * x * z - st * y, olc * y * z + st * x, olc * z * z + ct],
-        ]
-    )
-
-
 class Strand:
     """
     Collection of nucleotides in the 3' -> 5' direction
@@ -97,8 +48,11 @@ class Strand:
         copy - get a copy of a Strand instance
     """
 
-    def __init__(self, nucleotides: list = []):
-        self._nucleotides = nucleotides
+    def __init__(self, nucleotides: list = None):
+        if nucleotides:
+            self._nucleotides = nucleotides
+        else:
+            self._nucleotides = []
 
         self.index = 1
         self._nucleotide_shift = 0
@@ -200,106 +154,68 @@ class Strand:
 
 
 def generate_helix(
-    bp: int,
+    n: int = None,
     sequence: str = None,
-    # length: float = None, # draft for future
-    start_pos: np.ndarray = np.array([0.0, 0.0, 0.0]),
-    back_orient_a1: np.ndarray = np.array([1.0, 0.0, 0.0]),
-    base_orient_a3: np.ndarray = np.array([0.0, 1.0, 0.0]),
-    initial_rot: float = 0.0,  # radians
-    BP_PER_TURN: float = 10.34,
+    start_position: np.ndarray = np.array([0., 0., 0.]),
+    direction: np.ndarray = np.array([0., 1., 0.]),
+    a1: np.ndarray = np.array([1., 0., 0.]),
+    initial_rotation: float = None,
     double: bool = False,
-    double_start: int = None,
-    double_end: int = None,
 ) -> List[Strand]:
-    """
-    Generate a strand of DNA around a centerline (a3)
-        - ssDNA (default) or dsDNA (double = True)
-        - by default, strand propagates in the xy plane
 
-        Arguments:
-        bp --- Integer number of bp/nt (required)
-        sequence --- String. Should be same length as bp (default None)
-            Default (None) generates a random sequence. If sequence shorter
-            than bp given, a random sequence is assigned for the remaining
-            nucleotides
-        start_pos --- Location to begin building the strand 
-            (default np.array([0.0, 0.0, 0.0]))
-        back_orient_a1 --- Sets a1 unit vector, indicating orientation 
-            (tilting) of base with respect to backbone 
-            (default np.array([1.0, 0.0, 0.0]))
-        base_orient_a3 --- a3 unit vector, indicating orientation of 
-            backbone with respect to base
-            (default np.array([0.0, 1.0, 0.0]))
-        initial_rot --- Rotation of first bp in radians 
-            (default 0.0)
-        BP_PER_TURN --- Base pairs per complete 2*pi helix turn.
-            (default 10.34)
-        ds_start --- Index (from 0) to begin double stranded region
-            (default None)
-        ds_end --- Index (from 0) to end double stranded region 
-            (default None)
-        double --- Generate dsDNA by forming complementary strand in the
-            reverse direction (default False)
-        
-    """
+    # handle sequence/n arguments
+    if sequence and n:
+        if len(sequence) != n:
+            difference = len(sequence) - n
 
-    # Set Sequence
-    if sequence:
-        try:
-            assert type(sequence) == str
-        except TypeError:
-            raise TypeError("Sequence must be given as a string")
-        if len(sequence) > bp:
-            # n = len(sequence) - bp
-            # print(f"Final {n} bases will not be assigned, seq. too long")
-            sequence_base = sequence
-        elif len(sequence) < bp:
-            n = bp - len(sequence)
-            extra_seq_to_add = np.random.randint(0, 4, n)
-            extra_seq_to_add = "".join(str(number_to_base[x]) for x in extra_seq_to_add)
-            sequence_base = sequence + extra_seq_to_add
-        else:
-            sequence_base = sequence
+            # sequence longer than n
+            if difference > 0:
+                sequence = sequence[:n]
+
+            # n longer than sequence
+            else:
+                sequence += ''.join(
+                    [random.choice(['A', 'T', 'C', 'G']) for i in range(-difference)]
+                )
+
+    elif sequence:
+        n = len(sequence)
+    elif n:
+        sequence = ''.join([random.choice(['A', 'T', 'C', 'G']) for i in range(n)])
     else:
-        sequence_numbers = np.random.randint(0, 4, bp)
-        sequence_base = [number_to_base[i] for i in sequence_numbers]
+        raise TypeError(
+            'Please provide either the number of base-pairs or a sequence'
+        )
 
-    # Ensure vectors are in [1.0,0.0,0.0] format (not [1,0,0])
-    dir = base_orient_a3.astype("float64")
-    perp = back_orient_a1.astype("float64")
-    updated_pos = np.array(start_pos.astype("float64"))
+    # handle a1/angle arguments
+    if initial_rotation:
+        a1 = np.dot(get_rotation_matrix(direction, initial_rotation), a1)
 
-    # Setup
-    R0 = get_rotation_matrix(dir, initial_rot)
-    R = get_rotation_matrix(dir, [1, bp])
-    a1 = np.dot(R0, perp)
-    a3 = dir
+    # initialise strand list
+    strands = []
 
-    ds_start = 0
-    ds_end = bp
+    # create main strand
+    strand = Strand()
+    strand.add_nucleotide(
+            Nucleotide(
+                sequence[0],
+                start_position,
+                a1=a1,
+                a3=direction,
+            )
+        )
+    for base in sequence[1:]:
+        strand.add_nucleotide(strand.nucleotides[-1].make_5p(base))
 
-    # Add nucleotides in canonical double helix
-    new_strand_1 = Strand([])
-    for i in range(bp):
-        new_nt = Nucleotide(sequence_base[i], updated_pos - CM_CENTER_DS * a1, a1, a3,)
-        new_strand_1.add_nucleotide(new_nt)
-        if i != bp - 1:
-            a1 = np.dot(R, a1)
-            updated_pos += a3 * BASE_BASE
+    # add to strand list which will be returned
+    strands.append(strand.copy())
 
+    # create across strand 
     if double:
-        new_strand_2 = Strand([])
-        sequence_numbers = [base_to_number[i] for i in sequence_base]
-        reverse_seq_number = [3 - j for j in sequence_numbers]
-        reverse_seq = [number_to_base[k] for k in reverse_seq_number]
-        for i in reversed(range(ds_start, ds_end)):
-            # Note that the complement strand is built in reverse order
-            nt1 = new_strand_1._nucleotides[i]
-            a1 = -nt1._a1
-            a3 = -nt1._a3
-            nt2_pos_com = -(FENE_EPS + 2 * POS_BACK) * a1 + nt1.pos_com
-            new_strand_2.add_nucleotide(Nucleotide(reverse_seq[i], nt2_pos_com, a1, a3))
-        return [new_strand_1, new_strand_2]
-    else:
-        return [new_strand_1]
+        strand = Strand()
+        # iterate over nucleotides from original strand but in reverse
+        for nucleotide in strands[0].nucleotides[::-1]:
+            strand.add_nucleotide(nucleotide.make_across())
+        strands.append(strand.copy())
+    
+    return strands
