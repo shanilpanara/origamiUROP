@@ -203,7 +203,7 @@ class Lattice:
                  polygon_vertices: np.ndarray,
                  grid_size: List[float] = [POS_STACK, 1.00],
                  bp_per_turn: float = 10.45,
-                 straightening_factor: int = 8,
+                 straightening_factor: int = 5,
                  start_side="left"):
         """
         Lattice class forms a set of points given a polygon where a DNA Origami Scaffold
@@ -674,7 +674,12 @@ class Lattice:
              fout: str = None,
              poly=True,
              cross=True,
-             lattice_points=True):
+             lattice_points=True,
+             root: str = "",
+             title: str = None):
+        """
+        Plot the lattice coordinates or lattice as an array
+        """
 
         nodes = np.array(lattice)
         if not ax:
@@ -688,16 +693,20 @@ class Lattice:
         ax.set_ylabel("No. of strands")
 
         if np.shape(nodes)[1] == 2:
-            print("Plotting from coords")
+            # print("Plotting from coords")
             if lattice_points:
                 ax.plot(nodes[:, 0], nodes[:, 1], "ko", ms=0.5)
             if poly:
                 self.plotPolygon(ax, nodes, coords=True)
             if cross:
                 self.plotCrossovers(ax, coords=True)
-            ax.set_title("Lattice plotted from coords")
+            if title:
+                ax.set_title(f"{title}")
+            else:
+                ax.set_title("Lattice plotted from coords")
 
         else:
+            # Plotting from array
             cmap = plt.get_cmap("hot")
             if lattice_points:
                 ax.imshow(nodes[::-1], cmap)
@@ -705,11 +714,14 @@ class Lattice:
                 self.plotPolygon(ax, nodes, coords=False)
             if cross:
                 self.plotCrossovers(ax, coords=False)
-            ax.set_title("Lattice plotted from array")
+            if title:
+                ax.set_title(f"{title}")
+            else:
+                ax.set_title("Lattice plotted from array")
 
         plt.gca().set_aspect(5)
         if fout:
-            plt.savefig(f"{fout}.png", dpi=500)
+            plt.savefig(f"{root}{fout}.png", dpi=500)
 
         if not ax:
             plt.show()
