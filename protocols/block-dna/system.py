@@ -84,6 +84,7 @@ class System:
         time - Time of the system
         E_pot - Potential energy
         E_kin - Kinetic energy
+        Helllloooos
     """
 
     def __init__(
@@ -197,6 +198,10 @@ class System:
         with open(os.path.join(pathname, filename2), "w") as f:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
+
+        with open (os.path.join(pathname,"filetest"), "w") as f:
+            f.write(filename1)
+            f.write(filename2)
 
     def write_LAMMPS(self, prefix : str = 'out'):
         """
