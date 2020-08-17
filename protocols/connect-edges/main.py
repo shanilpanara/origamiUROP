@@ -40,8 +40,8 @@ def with_strands(N : int = 10):
     new_direction = np.array([0.0, 1.0, 1.0]) / 2 ** 0.5
     new_a1 = np.array([0.0, -1.0, 1.0]) / 2 ** 0.5
     #print(np.dot(new_a1, new_direction))
-    #rotation = -0.06
-    rotation = 0.0
+    rotation = -0.06
+    #rotation = 0.0
 
     strands += generate_helix(
         n=N,
