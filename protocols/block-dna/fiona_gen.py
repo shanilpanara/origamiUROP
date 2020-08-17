@@ -8,7 +8,8 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from origamiUROP.oxdna import System, Strand, Nucleotide
+from origamiUROP.oxdna import Strand, Nucleotide
+from system import System
 from origamiUROP.oxdna.strand import generate_helix, FENE_EPS
 
 def generate_system(

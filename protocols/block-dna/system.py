@@ -84,6 +84,7 @@ class System:
         time - Time of the system
         E_pot - Potential energy
         E_kin - Kinetic energy
+        Helllloooos
     """
 
     def __init__(
@@ -183,8 +184,8 @@ class System:
             prefix ('out') : prefix to output files
         """
         pathname = "oxDNA_sims/sim" + "{:.0f}".format(sim_nb)
-        filename1 = f"oxdna.{prefix}.conf"
-        filename2 = f"oxnda.{prefix}.top"
+        filename1 = "oxdna.{prefix}.conf"
+        filename2 = "oxnda.{prefix}.top"
         
         pathlib.Path(pathname).mkdir(parents=True, exist_ok=True) 
         
