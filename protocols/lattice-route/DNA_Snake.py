@@ -1,7 +1,6 @@
 from origamiUROP.oxdna import System
 from origamiUROP.lattice import LatticeRoute
 from origamiUROP.polygons import BoundaryPolygon
-from matplotlib import pyplot as plt
 
 import numpy as np
 
@@ -10,11 +9,10 @@ from os import path
 ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 
-def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = "connected"):
+def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = None):
     polygon = BoundaryPolygon(polygon_vertices)
     lattice = polygon.lattice(straightening_factor=5, start_side="left")
     lattice.plot(lattice.final_coords, fout=PLOTout, poly = False, lattice_points= True)
-
     route = lattice.route()
     route.plot()
 
@@ -38,11 +36,11 @@ if __name__ == "__main__":
     triangle = np.array([[0,0,0],[5,9,0],[10,0,0]])
 
 
-    lattice = generate(square, DNAout=None, PLOTout="square_con")
-    lattice = generate(trap*2, DNAout=None, PLOTout="trap_con")
-    lattice = generate(hexagon*18, DNAout=None, PLOTout="hex_con")
-    lattice = generate(plus*6, DNAout=None, PLOTout="plus_con")
-    lattice = generate(diamond*20, DNAout=None, PLOTout="diam_con")
-    lattice = generate(trapREV*5, DNAout=None,PLOTout="trapREV_con")
-    lattice = generate(triangle*4, DNAout=None,PLOTout="triangle")
+    lattice = generate(square, DNAout="square", PLOTout="square")
+    lattice = generate(trap*2, DNAout="trapezium", PLOTout="trapezium")
+    lattice = generate(hexagon*18, DNAout="hexagon", PLOTout="hexagon")
+    lattice = generate(plus*6, DNAout="plus", PLOTout="plus")
+    lattice = generate(diamond*20, DNAout="diamond", PLOTout="diamond")
+    lattice = generate(trapREV*5, DNAout="trapezium_rev",PLOTout="trapezium_rev")
+    lattice = generate(triangle*4, DNAout="triangle",PLOTout="triangle")
 
