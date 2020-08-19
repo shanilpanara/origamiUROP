@@ -12,6 +12,9 @@ from origamiUROP.oxdna import Strand, Nucleotide
 CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
 TOPOLOGY_COLUMNS = ["strand", "base", "3p", "5p"]
 
+LMP_COL_ATOMS = ['id', 'type', 'position', 'molecule', 'flag', 'density']
+LMP_COL_VELOCITIES = ['id', 'v', 'L']
+LMP_COL_ELLIPSOIDS = ['id', 'shape', 'quaternion']
 
 def oxDNA_string(dataframe: pd.DataFrame) -> str:
     """
@@ -30,6 +33,33 @@ def oxDNA_string(dataframe: pd.DataFrame) -> str:
             "a3": lambda x: [f"{i:.4f}" for i in x],
             "v": lambda x: [f"{i:.4f}" for i in x],
             "L": lambda x: [f"{i:.4f}" for i in x],
+        },
+    )
+    # remove all excess symbols and whitespace
+    output = re.sub(r"\[|\]|\'|\`|\,", "", output)
+    # there are a combination of triple & double spaces
+    # hence substitute all multi-spaces with one space
+    output = re.sub(r" +", " ", output)
+    output = output.strip()
+    output = output.replace("\n ", "\n")
+    return output
+
+def lammps_string(dataframe : pd.DataFrame) -> str:
+    """
+    Formats the dataframes needed for writing the
+    lammps dataframe to the appropriate file format.
+    """
+    output = dataframe.to_string(
+        header=False,
+        index=False,
+        justify="left",
+        # format to ensure 4 decimal places
+        formatters={
+            "position": lambda x: [f"{i:.10f}" for i in x],
+            "shape": lambda x: [f"{i:.10f}" for i in x],
+            "quaternion": lambda x: [f"{i:.10f}" for i in x],
+            "v": lambda x: [f"{i:.10f}" for i in x],
+            "L": lambda x: [f"{i:.10f}" for i in x],
         },
     )
     # remove all excess symbols and whitespace
@@ -70,6 +100,26 @@ class System:
     @property
     def E_tot(self):
         return self.E_pot + self.E_kin
+    
+    @property
+    def bonds(self) -> int:
+        """
+        Returns the total number of bonds in the system,
+        used for writing LAMMPS configuration data files.
+        """
+        result = pd.concat(i.bonds for i in self.strands)
+        result['id'] = [i+1 for i in range(len(result))]
+        return result[['id', 'type', 'atom_1', 'atom_2']]
+
+    @property
+    def lammps(self) -> List[pd.DataFrame]:
+        """
+        Returns a DataFrame containing the
+        information needed to write a LAMMPS configuration
+        data file
+        """
+        result = pd.concat(i.lammps for i in self.strands)
+        return result
 
     @property
     def strands(self) -> list:
@@ -102,24 +152,60 @@ class System:
     def topology(self) -> pd.DataFrame:
         return self.dataframe[TOPOLOGY_COLUMNS]
 
-    def write_oxDNA(self, prefix: str = "out"):
+    def write_oxDNA(self, prefix: str = "out", root : str = '.'):
         """
         Writes two files oxdna.*.conf and oxdna.*.top for the
         configuration file and topology file required
         to run a simulation using oxDNA
 
         Parameters:
-            prefix (default='out') : prefix to output files
+            prefix ('out') : prefix to output files
         """
-        with open(f"oxdna.{prefix}.conf", "w") as f:
+        with open(f"{root}/oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
             f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
             f.write(oxDNA_string(self.configuration))
 
-        with open(f"oxnda.{prefix}.top", "w") as f:
+        with open(f"{root}/oxdna.{prefix}.top", "w") as f:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
+
+    def write_LAMMPS(self, prefix : str = 'out', root : str = '.'):
+        """
+        Writes lammps.*.conf which is a configuration data
+        file needed to run a lammps simulation.
+        
+        Parameters;
+            prefix ('out') : prefix to output file
+        """
+
+        with open(f"{root}/lammps.{prefix}.conf", "w") as f:
+            f.write(f"# LAMMPS data file\n")
+            f.write(f'{len(self.nucleotides)} atoms\n')
+            f.write(f'{len(self.nucleotides)} ellipsoids\n')
+            f.write(f'{len(self.bonds)} bonds\n\n')
+            f.write(f'4 atom types\n')
+            f.write(f'1 bond types\n\n')
+            f.write(f'0.0 {self.box[0]} xlo xhi\n')
+            f.write(f'0.0 {self.box[1]} ylo yhi\n')
+            f.write(f'0.0 {self.box[2]} zlo zhi\n\n')
+
+            f.write(f'Masses\n\n')
+            f.write(f'1 3.1575\n')
+            f.write(f'2 3.1575\n')
+            f.write(f'3 3.1575\n')
+            f.write(f'4 3.1575\n')
+
+            f.write('\nAtoms\n\n')
+            f.write(lammps_string(self.lammps[LMP_COL_ATOMS]))
+            f.write('\n\nVelocities\n\n')
+            f.write(lammps_string(self.lammps[LMP_COL_VELOCITIES]))
+            f.write('\n\nEllipsoids\n\n')
+            f.write(lammps_string(self.lammps[LMP_COL_ELLIPSOIDS]))
+            f.write('\n\nBonds\n\n')
+            f.write(lammps_string(self.bonds))
+            f.write('\n')
 
     def add_strand(self, addition: Strand, index: int = None):
         """
@@ -174,3 +260,24 @@ class System:
                 "add_strands() requires ONE of a list or dictionary of strands"
             )
 
+def read_LAMMPS_dump(fname : str) -> System:
+    """
+    Reads a LAMMPS dump file that has been simulated
+    with the oxDNA(2) force field.
+
+    Parameters:
+        fname - filename
+    """
+    system = System()
+    return system
+
+def read_LAMMPS_data(fname : str) -> System:
+    """
+    Reads a LAMMPS configuration data file that can
+    be simulated with the oxDNA(2) force field.
+
+    Parameters:
+        fname - filename
+    """
+    system = System()
+    return system

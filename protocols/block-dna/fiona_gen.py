@@ -14,8 +14,7 @@ from origamiUROP.oxdna.strand import generate_helix, FENE_EPS
 def generate_system(
         n : int,
         double_strand_length : int,
-        single_strand_length : int,
-        box : float = None,
+        single_strand_length : int
     ) -> System:
     """
     Generates an oxDNA system containing a single piece of DNA
@@ -30,8 +29,7 @@ def generate_system(
         system - oxDNA system
     """
     # initialise system to comply with minimum image convention
-    if not box:
-        box = 2. * n * FENE_EPS
+    box = 2. * n * FENE_EPS
     print(f'Creating simulation system with box size: {box}')
     system = System(np.array([box, box, box]))
 
@@ -71,15 +69,12 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--number', type=int, required=True)
     parser.add_argument('-ds', '--double-stranded', type=int, required=True)
     parser.add_argument('-ss', '--single-stranded', type=int, required=True)
-    parser.add_argument('-b', '--box', type=float, default=None)
     parser.add_argument('-f', '--output-prefix')
-    
     args = parser.parse_args()
     system = generate_system(
         args.number,
         args.double_stranded,
-        args.single_stranded,
-        box = args.box
+        args.single_stranded
     )
     if args.output_prefix:
         system.write_oxDNA(args.output_prefix)

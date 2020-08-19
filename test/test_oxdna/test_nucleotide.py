@@ -1,5 +1,6 @@
 from origamiUROP.oxdna import Nucleotide
 import numpy as np
+import warnings
 
 
 def test_Nucleotide():
@@ -19,8 +20,38 @@ def test_Nucleotide():
 
     print(nucleotide)
     print(nucleotide.series)
+    nucleotide.make_5p('A')
+    nucleotide.make_across()
     return
 
+def test_Nucleotide_across():
+    nucleotide = Nucleotide(
+        "A",
+        np.array([1.0, 0.0, 0.0]),
+        np.array([1.0, 0.0, 0.0]),
+        np.array([0.0, 0.0, 1.0]),
+    )
 
+    # memory address of each object is stored
+    # in the Nucleotide._across attribute
+    new = nucleotide.make_across()
+    assert id(new._across) == id(nucleotide)
+    assert id(nucleotide._across) == id(new)
+
+    # Should correctly raise some warnings and pass the
+    # following assertions
+    new_2 = nucleotide.make_across()
+    assert id(new._across) != id(nucleotide)
+    assert id(nucleotide._across) != id(new)
+    assert id(new_2._across) == id(nucleotide)
+    assert id(nucleotide._across) == id(new_2)
+
+    # check the actual setting of indices works
+    nucleotide.index = 0
+    new_2.index = 1
+    assert nucleotide.across == new_2.index
+    assert new_2.across == nucleotide.index   
+    
 if __name__ == "__main__":
     test_Nucleotide()
+    test_Nucleotide_across()
