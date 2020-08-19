@@ -64,7 +64,7 @@ There are 4 ways of calling the oxDNA command, depending on a user's preference:
 
 4. Create a linker using `ln` and create the link in a folder that already exists in your path (may require root priveleges) e.g.
     ```
-    sudo /path/to/oxDNA/build/bin/oxDNA /usr/local/bin/oxDNA
+    sudo ln /path/to/oxDNA/build/bin/oxDNA /usr/local/bin/oxDNA
     ```
 
 ## View
