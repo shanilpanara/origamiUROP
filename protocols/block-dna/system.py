@@ -178,7 +178,8 @@ class System:
     def write_oxDNA_folder(self, sim_nb, tot_l, ds_l, ss_l, prefix: str = "out"):
         """
         Creates one folder to contain the configuration file and topology 
-        file required to run a simulation using oxDNA
+        file required to run a simulation using oxDNA and also outputs an 
+        info file with the total length, ds_portion and ss_portion lengths.
         Parameters:
             sim_nb : integer
             prefix ('out') : prefix to output files

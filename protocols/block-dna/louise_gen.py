@@ -22,19 +22,6 @@ if __name__ == '__main__':
     tot_length = np.arange(args.number[0], args.number[2]+1, args.number[1])
     ds_length = np.arange(args.double_stranded[0], args.double_stranded[2]+1, args.double_stranded[1])
     ss_length = np.arange(args.single_stranded[0], args.single_stranded[2]+1, args.single_stranded[1])
-    
-    """with open("test", "w") as f:
-        for i in range (len(tot_length)):
-            f.write (str(tot_length[i]))
-        f.write ("end of tot_length")
-        
-        for i in range (len(ds_length)):
-            f.write (str(ds_length[i]))
-        f.write ("end of ds_length")
-        
-        for i in range (len(ss_length)):
-            f.write (str(ss_length[i]))
-        f.write ("end of ss_length")"""
 
     sim_nb = 0 
 
