@@ -31,9 +31,9 @@ if __name__ == '__main__':
 
     sim_nb =0 
 
-    for i in range length(tot_length):
-        for j in range length(ds_length):
-            for k in range length(ss_length):
+    for i in range len(tot_length):
+        for j in range len(ds_length):
+            for k in range len(ss_length):
              
              check = tot_length[i] / (ds_length[j] + ss_length[k])
              if isinstance (check, int) == True:
