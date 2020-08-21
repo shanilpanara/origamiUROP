@@ -31,9 +31,9 @@ if __name__ == '__main__':
 
     sim_nb =0 
 
-    for i in range len(tot_length):
-        for j in range len(ds_length):
-            for k in range len(ss_length):
+    for i in range (len(tot_length)):
+        for j in range (len(ds_length)):
+            for k in range (len(ss_length)):
              
              check = tot_length[i] / (ds_length[j] + ss_length[k])
              if isinstance (check, int) == True:
@@ -42,8 +42,8 @@ if __name__ == '__main__':
                     ds_length[j],
                     ss_length[k]
                 )
-                sim_nb +=1
+                 sim_nb +=1
 
-                if args.output_prefix:
-                    system.write_oxDNA_folder(sim_nb, args.output_prefix)
+                 if args.output_prefix:
+                     system.write_oxDNA_folder(sim_nb, args.output_prefix)
             
