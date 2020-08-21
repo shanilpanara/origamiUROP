@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
                 if tot_length[i]%(ds_length[j] + ss_length[k]) == 0:
                     
-                    with open("test", "w") as f:
+                    """with open("test", "w") as f:
                         for i in range (len(tot_length)):
                             f.write (str(tot_length[i]))
                         f.write ("end of tot_length")
@@ -55,10 +55,10 @@ if __name__ == '__main__':
                         
                         for i in range (len(ss_length)):
                             f.write (str(ss_length[i]))
-                        f.write ("end of ss_length")
+                        f.write ("end of ss_length")"""
                     
                     system = generate_system(tot_length[i], ds_length[j], ss_length[k])
                     sim_nb +=1
 
                     if args.output_prefix:
-                        system.write_oxDNA_folder(sim_nb, args.output_prefix)
+                        system.write_oxDNA_folder(sim_nb, tot_length[i], ds_length[j], ss_length [k], args.output_prefix)

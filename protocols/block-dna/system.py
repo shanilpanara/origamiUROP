@@ -175,7 +175,7 @@ class System:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
     
-    def write_oxDNA_folder(self, sim_nb, prefix: str = "out"):
+    def write_oxDNA_folder(self, sim_nb, tot_l, ds_l, ss_l, prefix: str = "out"):
         """
         Creates one folder to contain the configuration file and topology 
         file required to run a simulation using oxDNA
@@ -198,6 +198,11 @@ class System:
         with open(os.path.join(pathname, filename2), "w") as f:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
+
+        with open(os.path.join(pathname,"sim_info"), "w") as f:
+            f.write("tot length is {:.0f}\n".format(tot_l))
+            f.write("ds length is {:.0f}\n".format(ds_l))
+            f.write("ss length is {:.0f}\n".format(ss_l))
 
     def write_LAMMPS(self, prefix : str = 'out'):
         """
