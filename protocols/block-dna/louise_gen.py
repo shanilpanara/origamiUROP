@@ -25,39 +25,25 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--output-prefix')
     args = parser.parse_args()
     
-    tot_length = np.arange(args.number[0], args.number[2]+1,args.number[1])
-    ds_length = np.arange(args.double_stranded[0], args.double_stranded[2]+1,args.double_stranded[1])
-    ss_length = np.arange(args.single_stranded[0], args.single_stranded[2]+1,args.single_stranded[1])
+    tot_length = np.arange(args.number[0], args.number[2]+1, args.number[1])
+    ds_length = np.arange(args.double_stranded[0], args.double_stranded[2]+1, args.double_stranded[1])
+    ss_length = np.arange(args.single_stranded[0], args.single_stranded[2]+1, args.single_stranded[1])
 
+    sim_nb =0 
 
     for i in range length(tot_length):
         for j in range length(ds_length):
             for k in range length(ss_length):
-
+             
              check = tot_length[i] / (ds_length[j] + ss_length[k])
-             if isinstance (check, int) == True and (ds_length[j] + ss_length[k]) < tot_length :
+             if isinstance (check, int) == True:
                  system = generate_system(
                     tot_length[i],
                     ds_length[j],
                     ss_length[k]
                 )
+                sim_nb +=1
 
                 if args.output_prefix:
-                    system.write_oxDNA_folder(sim_nb,args.output_prefix)
+                    system.write_oxDNA_folder(sim_nb, args.output_prefix)
             
-             
-
-
-
-    
-    
-    system = generate_system(
-        args.number[0],
-        args.double_stranded[0],
-        args.single_stranded[0]
-    )
-
-
-
-    if args.output_prefix:
-        system.write_oxDNA_folder(sim_nb,args.output_prefix)
