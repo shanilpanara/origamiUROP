@@ -210,13 +210,16 @@ class Lattice:
         Lattice class forms a set of points given a polygon where a DNA Origami Scaffold
         can be laid.
 
+        Arguments:
+            polygon_vertices - a set of vertices given in order, which form a closed shape
+            grid_size - the [x, y] distance between each site in the coordinate grid
+                (default = [0.34, 1.00])
+            bp_per_turn - the number of basepairs per 360 turn
+                (default: 10.45) 
+            straightening factor - used in 
+
         `lattice` refers to a coordinate system & `grid` refers to an array of 1's and 0's
         Both `lattice` and `grid` represent sites where scaffold can be laid
-
-        Arguments:
-        polygon --- a set of vertices given in order, which form a closed shape
-        x_spacing --- (default = 0.34) the x distance between each site in the coordinate grid
-        y_spacing --- (default = 1.00) the y distance between each site in the coordinate grid
         """
         self.polygon_array = polygon_vertices.astype(dtype=np.float64)
         self.polygon = geometry.Polygon(polygon_vertices)
@@ -230,19 +233,14 @@ class Lattice:
 
         assert self.start_side in ["left","right"], "start_side must be: 'left' or 'right'"
 
-        # DNA Snake
         self.intersected_coords = self.intersect_polygon()
         self.intersected_array = self.coords_to_array(self.intersected_coords)
-        self.quantised_array = self.quantise_rows(self.intersected_array)
-        self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
-        self.connected_array = self.connect_rows(self.straightened_array, self.start_side, self.poss_cross)
 
-        self.final_array = self.connected_array
-        self.final_coords = self.array_to_coords(self.final_array)
-
-        self.crossover_array = self.get_crossovers(self.final_array)
-        self.crossover_coords = self.array_to_coords(self.crossover_array)
-
+    @property
+    def poss_cross(self):
+        """Find possible crossover locations"""
+        max_width = np.shape(self.intersected_array)[1]
+        return find_crossover_locations(max_width + self.padding)
 
     def intersect_polygon(self):  # Returns coordinates
         """
@@ -288,7 +286,8 @@ class Lattice:
         lattice[:, 1] -= y_min
         return lattice
 
-    def coords_to_array(self, coords):  # Returns array
+    @staticmethod
+    def coords_to_array(coords):  # Returns array
         """ 
         Make binary array representing the lattice sites
         --> 1 = scaffold site
@@ -307,7 +306,8 @@ class Lattice:
             grid[point[1], point[0]] = 1
         return grid
 
-    def quantise_rows(self, array):  # Returns array
+    @staticmethod
+    def quantise_rows(array, poss_cross, padding):  # Returns array
         """
         Ensure first and last scaffold site in the row correlate to
         a position where the half turn crossover most likely occurs.
@@ -321,12 +321,8 @@ class Lattice:
         """
         grid = deepcopy(array)
 
-        # Find possible crossover locations
-        max_width = np.shape(grid)[1]
-        self.poss_cross = find_crossover_locations(max_width + self.padding)
-
         # Add a border of 16 0's around the lattice
-        grid = np.pad(grid, pad_width=self.padding, mode="constant", constant_values=0)
+        grid = np.pad(grid, pad_width=padding, mode="constant", constant_values=0)
 
         # Find the number of nucleotide sites per row and store in a numpy array
         nt_per_row = []
@@ -339,7 +335,7 @@ class Lattice:
         # values 1-4 round up
         nt_per_row_round_1 = [5 if 0 < i < 5 else i for i in nt_per_row]
         # other values round to closest half turn
-        closest_crossover = lambda x: find_closest(self.poss_cross, x)
+        closest_crossover = lambda x: find_closest(poss_cross, x)
         nt_per_row_round_2 = np.array(
             list(map(closest_crossover, nt_per_row_round_1)))
         nt_per_row_diff = nt_per_row_round_2 - nt_per_row
@@ -348,7 +344,8 @@ class Lattice:
 
         return grid
 
-    def straighten_edges(self, array, sf: int):
+    @staticmethod
+    def straighten_edges(array, sf: int):
         """
         Algorithm to straighten out edges of the lattice
         
@@ -371,7 +368,8 @@ class Lattice:
                 grid[row] = np.roll(grid[row], change_in_location)
         return grid
 
-    def connect_rows(self, array, start_side, half_turn_locations):
+    @staticmethod
+    def connect_rows(array, start_side, half_turn_locations, bp_per_turn):
         """
         Algorithm to ensure every row connects to the next
 
@@ -434,7 +432,7 @@ class Lattice:
 
             elif abs(extra_turns) > 1:
                 if R:
-                    extra_turns_right = int(round(abs(right1-right0) / self.bp_per_turn, 0))
+                    extra_turns_right = int(round(abs(right1-right0) / bp_per_turn, 0))
                     if not top_bigger:
                         # shorten the end of row 0
                         if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
@@ -449,7 +447,7 @@ class Lattice:
                             row0_diff = poss_cross[cross_idx_bottom + extra_turns_right] - row_width[0] 
                     
                 elif not R:
-                    extra_turns_left = int(round(abs(left1-left0) / self.bp_per_turn, 0))
+                    extra_turns_left = int(round(abs(left1-left0) / bp_per_turn, 0))
                     if not top_bigger:
                         # shorten the end of row 0
                         if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
@@ -548,7 +546,8 @@ class Lattice:
 
         return grid
 
-    def array_to_coords(self, array):
+    @staticmethod
+    def array_to_coords(array):
         """Returns lattice points as a set of coordinates"""
         # Remove padding and find coordinates of updated system
         grid = deepcopy(array)
@@ -563,14 +562,15 @@ class Lattice:
         coords[:, 0], coords[:, 1] = coords[:, 1], coords[:, 0].copy()
         return coords
 
-    def get_crossovers(self, array):
+    @staticmethod
+    def get_crossovers(array, start_side, poss_cross):
         """ Returns a binary array, where 1 represents a potential crossover location"""
         grid = deepcopy(array)
         # copy the size of grid but fill it with zeros
         crossovers_array = np.zeros(np.shape(grid))
 
         sides = {"left": "right", "right": "left"}
-        side = self.start_side  # begin at the left / rightside
+        side = start_side  # begin at the left / rightside
         for row in range(np.shape(grid)[0]):
             # to account for padding, calc no. of lattice sites on row
             lattice_sites = np.sum(grid[row])
@@ -581,7 +581,7 @@ class Lattice:
             left_bound = np.argwhere(grid[row])[0]
             right_bound = np.argwhere(grid[row])[-1]
 
-            for bp in self.poss_cross:
+            for bp in poss_cross:
                 if bp > lattice_sites:
                     continue
                 if side == "left":
@@ -593,9 +593,18 @@ class Lattice:
 
         return crossovers_array
 
-    def route(self, *args, **kwargs) -> List[LatticeNode]:
-        """Generate Scaffold Route, returns list of LatticeNode objects"""
-        coords = deepcopy(self.crossover_coords)
+    def route(self, crossovers = None, *args, **kwargs) -> List[LatticeNode]:
+        """Generate Scaffold Route, returns list of LatticeNode objects
+        
+        Arguments:
+            crossovers - binary array or list of coordinates of crossovers
+        """
+        if crossovers is None:
+            coords = self.crossover_coords
+        elif np.shape(crossovers)[1] not in [2,3]: # if array
+            coords = self.array_to_coords(crossovers)
+        else:
+            coords = crossovers
 
         # add 3rd column (z = 0)
         shape = np.shape(coords)
@@ -693,3 +702,20 @@ class Lattice:
             plt.savefig(f"{root}{fout}.png", dpi=500)
         if not ax:
             plt.show()
+
+class DNASnake(Lattice):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        
+        self.quantised_array = self.quantise_rows(self.intersected_array, self.poss_cross, self.padding)
+        self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
+        self.connected_array = self.connect_rows(self.straightened_array, 
+                                                self.start_side, 
+                                                self.poss_cross, 
+                                                self.bp_per_turn)
+
+        self.final_array = self.connected_array
+        self.final_coords = self.array_to_coords(self.final_array)
+
+        self.crossover_array = self.get_crossovers(self.final_array, self.start_side, self.poss_cross)
+        self.crossover_coords = self.array_to_coords(self.crossover_array)
