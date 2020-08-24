@@ -216,7 +216,7 @@ class Lattice:
                 (default = [0.34, 1.00])
             bp_per_turn - the number of basepairs per 360 turn
                 (default: 10.45) 
-            straightening factor - used in 
+            straightening factor - used to align
 
         `lattice` refers to a coordinate system & `grid` refers to an array of 1's and 0's
         Both `lattice` and `grid` represent sites where scaffold can be laid
@@ -235,6 +235,8 @@ class Lattice:
 
         self.intersected_coords = self.intersect_polygon()
         self.intersected_array = self.coords_to_array(self.intersected_coords)
+        
+        self.crossover_coords = None
 
     @property
     def poss_cross(self):
@@ -421,6 +423,7 @@ class Lattice:
             top_bigger = True if TminusB > 0 else False
             extra_turns = cross_idx_bottom - cross_idx_top  # in whole row
             row0_diff = 0
+            row1_diff = 0
 
             # Same size rows, just shift them left or right
             if TminusB == 0:
@@ -437,6 +440,8 @@ class Lattice:
                         # shorten the end of row 0
                         if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
+                        # elif all_same(row_width[1:]):
+                        #     row1_diff = poss_cross[cross_idx_top + extra_turns_right] - row_width[1]
                         else:
                             row0_diff = poss_cross[cross_idx_bottom - extra_turns_right] - row_width[0]
                     else:
@@ -452,6 +457,8 @@ class Lattice:
                         # shorten the end of row 0
                         if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
+                        # elif all_same(row_width[1:]):
+                        #     row1_diff = poss_cross[cross_idx_top + extra_turns_left] - row_width[1] 
                         else:
                             row0_diff = poss_cross[cross_idx_bottom - extra_turns_left] - row_width[0] 
                     else:
@@ -459,11 +466,10 @@ class Lattice:
                         if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
                             row0_diff = poss_cross[cross_idx_bottom + 1] - row_width[0]
                         else:
-                            row0_diff = poss_cross[
-                                cross_idx_bottom +
-                                extra_turns_left] - row_width[0]
+                            row0_diff = poss_cross[cross_idx_bottom + extra_turns_left] - row_width[0]
 
                 row0 = modify_lattice_row(row0, row0_diff, side(0, R))
+                # row1 = modify_lattice_row(row1, row1_diff, side(1, R))
 
                 if R:
                     row1_roll = right0 - right1 + row0_diff
@@ -657,7 +663,7 @@ class Lattice:
             # add padding to match
             polygon += [self.padding, self.padding, 0]
 
-        ax.plot(polygon[:, 0], polygon[:, 1], "r-")
+        ax.plot(polygon[:, 0], polygon[:, 1], "g--", linewidth = 0.5)
 
         return ax
 
@@ -670,7 +676,17 @@ class Lattice:
              title: str = None):
         """
         Plot the lattice coordinates or lattice as an array
+
+        Arguments:
+            plot_these - will take up to 2 sets of lattice and crossover coordinates
+            ax - an axes
+            fout - saves the plot as a png with the name of `fout`
+            poly - True will plot the initial polygon vertices
+            root - directory to save file in, defaults to saving in current directory
+            title - this is the title of the plot
+
         """
+        assert len(plot_these) <= 4, "Max no. of plots on one axis reached, 4 or less"
 
         if not ax:
             fig, ax = plt.subplots()
@@ -682,7 +698,7 @@ class Lattice:
         ax.set_xlabel("No. of nucleotides")
         ax.set_ylabel("No. of strands")
 
-        point_style = itertools.cycle(["ko", "bx","c.","gP"])
+        point_style = itertools.cycle(["ko", "bx","r.","cP"])
         point_size = itertools.cycle([0.5, 2.5])
         for points in plot_these:
             if np.shape(points)[1] not in [2,3]: # if array
@@ -697,19 +713,18 @@ class Lattice:
         if title:
             ax.set_title(f"{title}")
 
-        plt.gca().set_aspect(5)
+        plt.gca().set_aspect(8)
         if fout:
             plt.savefig(f"{root}{fout}.png", dpi=500)
         if not ax:
             plt.show()
 
 class DNASnake(Lattice):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.quantised_array = self.quantise_rows(self.intersected_array, self.poss_cross, self.padding)
-        self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
-        self.connected_array = self.connect_rows(self.straightened_array, 
+        # self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
+        self.connected_array = self.connect_rows(self.quantised_array, 
                                                 self.start_side, 
                                                 self.poss_cross, 
                                                 self.bp_per_turn)
