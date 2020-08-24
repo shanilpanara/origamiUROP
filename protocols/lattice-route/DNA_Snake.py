@@ -1,5 +1,5 @@
 from origamiUROP.oxdna import System
-from origamiUROP.lattice import LatticeRoute
+from origamiUROP.lattice import LatticeRoute, DNASnake
 from origamiUROP.polygons import BoundaryPolygon
 
 import numpy as np
@@ -11,17 +11,18 @@ ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = None):
     polygon = BoundaryPolygon(polygon_vertices)
-    lattice = polygon.lattice(straightening_factor=5, start_side="left")
-    l = lattice
-    l.plot([l.final_coords, l.crossover_coords, l.straightened_array], fout=PLOTout, poly = False)
+    lattice = polygon.dna_snake(straightening_factor=5, start_side="left")
     route = lattice.route()
+
+    if PLOTout:
+        plot_list = [lattice.quantised_array, lattice.crossover_coords]
+        lattice.plot(plot_list, fout=PLOTout, poly = True)
     route.plot()
 
     if DNAout:
-        system= route.system()
+        system = route.system()
         system.write_oxDNA(prefix = DNAout, root=ROOT)
 
-    return l.crossover_coords
 
 if __name__ == "__main__":
     square = np.array([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 4.0, 0.0], [0.0, 4.0, 0.0]])
@@ -37,11 +38,13 @@ if __name__ == "__main__":
     triangle = np.array([[0,0,0],[5,9,0],[10,0,0]])
 
 
-    # lattice = generate(square, DNAout="square", PLOTout="square")
-    # lattice = generate(trap*2, DNAout="trapezium", PLOTout="trapezium")
-    # lattice = generate(hexagon*18, DNAout="hexagon", PLOTout="hexagon")
-    lattice = generate(plus*6, DNAout="plus", PLOTout="plus")
-    # lattice = generate(diamond*20, DNAout="diamond", PLOTout="diamond")
-    # lattice = generate(trapREV*5, DNAout="trapezium_rev",PLOTout="trapezium_rev")
-    # lattice = generate(triangle*4, DNAout="triangle",PLOTout="triangle")
+    # generate(square, DNAout="square", PLOTout="squares")
+    # generate(trap*8, DNAout="trapezium", PLOTout="trapeziums")
+    # generate(hexagon*18, DNAout="hexagon", PLOTout="hexagons")
+    # generate(plus*6, DNAout="plus", PLOTout="plus")
+    # generate(diamond*[20,30,0], DNAout="diamond", PLOTout="diamond")
+    # generate(trapREV*5, DNAout="trapezium_rev",PLOTout="trapezium_rev")
+    generate(triangle*6, DNAout="triangle",PLOTout="triangle")
+
+    # generate(plus*6, DNAout="plus", PLOTout="plus")
 
