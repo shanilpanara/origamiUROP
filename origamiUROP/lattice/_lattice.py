@@ -637,7 +637,9 @@ class Lattice:
              fout: str = None,
              poly = True,
              root: str = "",
-             title: str = None):
+             title: str = None,
+             aspect: int = 3,
+             ticks: list = [10,5]):
         """
         Plot the lattice coordinates or lattice as an array
 
@@ -648,6 +650,7 @@ class Lattice:
             poly - True will plot the initial polygon vertices
             root - directory to save file in, defaults to saving in current directory
             title - this is the title of the plot
+            aspect - this is the aspect ratio of the x and y axes
 
         """
         assert len(plot_these) <= 4, "Max no. of plots on one axis reached, 4 or less"
@@ -657,8 +660,8 @@ class Lattice:
         # plt.grid(True)
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontsize(4)
-        ax.xaxis.set_major_locator(MultipleLocator(10))
-        ax.yaxis.set_major_locator(MultipleLocator(10))
+        ax.xaxis.set_major_locator(MultipleLocator(ticks[0]))
+        ax.yaxis.set_major_locator(MultipleLocator(ticks[1]))
         ax.set_xlabel("No. of nucleotides")
         ax.set_ylabel("No. of strands")
 
@@ -677,7 +680,7 @@ class Lattice:
         if title:
             ax.set_title(f"{title}")
 
-        plt.gca().set_aspect(8)
+        plt.gca().set_aspect(aspect)
         if fout:
             plt.savefig(f"{root}{fout}.png", dpi=500)
         if not ax:
