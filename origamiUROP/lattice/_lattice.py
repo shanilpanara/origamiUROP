@@ -216,10 +216,13 @@ class Lattice:
                 (default = [0.34, 1.00])
             bp_per_turn - the number of basepairs per 360 turn
                 (default: 10.45) 
-            straightening factor - used to align
+            start_side - which side the DNA scaffold will start from "left" or "right"
 
-        `lattice` refers to a coordinate system & `grid` refers to an array of 1's and 0's
-        Both `lattice` and `grid` represent sites where scaffold can be laid
+        Note:
+            Both `lattice` and `grid` represent sites where scaffold can be laid
+                `lattice`   a coordinate system
+                `grid`      an array of 1's and 0's
+            
         """
         self.polygon_array = polygon_vertices.astype(dtype=np.float64)
         self.polygon = geometry.Polygon(polygon_vertices)
@@ -599,45 +602,6 @@ class Lattice:
 
         return crossovers_array
 
-    def route(self, crossovers = None, *args, **kwargs) -> List[LatticeNode]:
-        """Generate Scaffold Route, returns list of LatticeNode objects
-        
-        Arguments:
-            crossovers - binary array or list of coordinates of crossovers
-        """
-        if crossovers is None:
-            coords = self.crossover_coords
-        elif np.shape(crossovers)[1] not in [2,3]: # if array
-            coords = self.array_to_coords(crossovers)
-        else:
-            coords = crossovers
-
-        # add 3rd column (z = 0)
-        shape = np.shape(coords)
-        if shape[1] != 3:
-            coords = np.c_[coords, np.zeros(shape[0])]
-
-        crossovers_per_row = 2
-        lattice_rows = int(coords[:, 1].max() + 1)  # coords counts from 0
-        vertices_in_route = int(crossovers_per_row * lattice_rows)
-        vertex_list = np.zeros((vertices_in_route, 3))
-
-        # Find final crossover from left or right and make it a node
-        for row in range(0, lattice_rows):
-            vertex_index_L = bisect_left(coords[:, 1], row)
-            vertex_index_R = bisect_right(coords[:, 1], row) - 1
-            if row % 2 == 0:  # if even
-                vertex_list[row * 2] = coords[vertex_index_L]
-                vertex_list[row * 2 + 1] = coords[vertex_index_R]
-            else:  # if odd
-                vertex_list[row * 2] = coords[vertex_index_R]
-                vertex_list[row * 2 + 1] = coords[vertex_index_L]
-
-        # print(vertex_list)
-
-        node_list = [LatticeNode(i) for i in vertex_list]
-        return LatticeRoute(node_list, *args, **kwargs)
-
     def plotPolygon(self, ax, nodes: np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
         x_min = polygon[:, 0].min()
@@ -722,6 +686,12 @@ class Lattice:
 class DNASnake(Lattice):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        """
+        Subclass of Lattice. Inherits all atributes and methods from this parent class.
+
+        When a DNASnake object is generated, it refers to a DNA Scaffold 
+        with a maximum of 2 crossovers per "row" in the lattice
+        """
         self.quantised_array = self.quantise_rows(self.intersected_array, self.poss_cross, self.padding)
         # self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
         self.connected_array = self.connect_rows(self.quantised_array, 
@@ -729,8 +699,55 @@ class DNASnake(Lattice):
                                                 self.poss_cross, 
                                                 self.bp_per_turn)
 
+        # Final Lattice and crossovers
         self.final_array = self.connected_array
-        self.final_coords = self.array_to_coords(self.final_array)
-
         self.crossover_array = self.get_crossovers(self.final_array, self.start_side, self.poss_cross)
+
+        # Lattice and Crossovers as coordinates
+        self.final_coords = self.array_to_coords(self.final_array)
         self.crossover_coords = self.array_to_coords(self.crossover_array)
+
+    def route(self, crossovers = None, *args, **kwargs) -> List[LatticeNode]:
+        """
+        Generate DNASnake scaffold route, returns list of LatticeNode objects
+        
+        Arguments:
+            crossovers - binary array or list of coordinates of crossovers
+            *args & **kwargs - correspond to those of the `LatticeRoute` class
+        
+        Note:
+            Different subclasses will use `Lattice` in a different way.
+            Moreover, they will probably have a different routing algorithm
+        """
+        if crossovers is None:
+            coords = self.crossover_coords
+        elif np.shape(crossovers)[1] not in [2,3]: # if array
+            coords = self.array_to_coords(crossovers)
+        else:
+            coords = crossovers
+
+        # add 3rd column (z = 0)
+        shape = np.shape(coords)
+        if shape[1] != 3:
+            coords = np.c_[coords, np.zeros(shape[0])]
+
+        crossovers_per_row = 2
+        lattice_rows = int(coords[:, 1].max() + 1)  # coords counts from 0
+        vertices_in_route = int(crossovers_per_row * lattice_rows)
+        vertex_list = np.zeros((vertices_in_route, 3))
+
+        # Find final crossover from left or right and make it a node
+        for row in range(0, lattice_rows):
+            vertex_index_L = bisect_left(coords[:, 1], row)
+            vertex_index_R = bisect_right(coords[:, 1], row) - 1
+            if row % 2 == 0:  # if even
+                vertex_list[row * 2] = coords[vertex_index_L]
+                vertex_list[row * 2 + 1] = coords[vertex_index_R]
+            else:  # if odd
+                vertex_list[row * 2] = coords[vertex_index_R]
+                vertex_list[row * 2 + 1] = coords[vertex_index_L]
+
+        # print(vertex_list)
+
+        node_list = [LatticeNode(i) for i in vertex_list]
+        return LatticeRoute(node_list, *args, **kwargs)
