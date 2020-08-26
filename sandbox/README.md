@@ -16,3 +16,4 @@ When adding a script to the sandbox, try and do the following:
 - `file2vertices.py` - contains an algorithm to extract vertices from different file types and make them cyclical, currently does not work
 - `point_in_polygon.py` - experimental 2D point in polygon code
 - `old_polygons.py`- old functions from `origamiUROP.polygons`
+- `find_crossovers.py` - experimental algorithms which could be used to determine row sizes for DNA lattices which have multiple columns as opposed to one in DNA Snake. Also contains updated find_crossover_locations function.
