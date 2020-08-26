@@ -499,13 +499,13 @@ class Lattice:
 
                         # where the last 2 rows have been equal and the next 2 rows are equal (or equal to 0)
                         elif min(width_tracker[-3:-1]) in [max(width_tracker[-3:-1]), 0] and (all_same(row_width[1:3]) or row_width[3] == row_width[2] == 0):
-                            if cross_idx_top > 1:
+                            if cross_idx_top > 0:
                                 # shorten ends of row 0/1 by 1 crossover
                                 row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                                 row0 = modify_lattice_row(row0, row0_diff, side(0, R))
                                 row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
                                 row1 = modify_lattice_row(row1, row1_diff, side(1, R))
-                            elif cross_idx_top < 2:
+                            elif cross_idx_top < 1:
                                 # shorten ends of row 0/1 by 1 crossover
                                 row0_diff = poss_cross[cross_idx_bottom - 1] - row_width[0]
                                 row0 = modify_lattice_row(row0, row0_diff, side(0, R))
@@ -524,7 +524,7 @@ class Lattice:
 
                 elif cross_idx_bottom == 0:  #5
                     if top_bigger:
-                        if row_width[2] < row_width[1]:
+                        if row_width[2] < row_width[1] or row_width[2] <= poss_cross[1]:
                             # row 1: 16 --> 5
                             row1_diff = poss_cross[cross_idx_top - 1] - row_width[1]
                             row1 = modify_lattice_row(row1, row1_diff, side(1, R))
@@ -595,6 +595,10 @@ class Lattice:
 
     def plotPolygon(self, ax, nodes: np.ndarray, coords: bool):
         polygon = deepcopy(self.polygon_array)
+        if np.shape(nodes)[1] not in [2,3]: # if array
+            nodes = self.array_to_coords(nodes)
+        
+
         x_min = polygon[:, 0].min()
         y_min = polygon[:, 1].min()
 
@@ -618,7 +622,7 @@ class Lattice:
             # add padding to match
             polygon += [self.padding, self.padding, 0]
 
-        ax.plot(polygon[:, 0], polygon[:, 1], "g--", linewidth = 0.5)
+        ax.plot(polygon[:, 0], polygon[:, 1], "r--", linewidth = 1, alpha = 0.5)
 
         return ax
 
@@ -669,7 +673,7 @@ class Lattice:
             ax.plot(nodes[:, 0], nodes[:, 1], next(point_style), ms=next(point_size), alpha=0.25)
         
         if poly:
-            self.plotPolygon(ax, nodes, coords=True)
+            self.plotPolygon(ax, plot_these[0], coords=True)
         if title:
             ax.set_title(f"{title}")
 

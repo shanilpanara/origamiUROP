@@ -132,21 +132,23 @@ class LatticeRoute(Strand):
         nodes = np.array(self.nodes)
         if not ax:
             fig, ax = plt.subplots()
-        plt.grid(True)
-        ax.xaxis.set_major_locator(MultipleLocator(1))
-        ax.yaxis.set_major_locator(MultipleLocator(1))
-        ax.plot(nodes[:, 0], nodes[:, 1], 'ko')
+        #plt.grid(True)
+        ax.xaxis.set_major_locator(MultipleLocator(20))
+        ax.yaxis.set_major_locator(MultipleLocator(5))
+        ax.plot(nodes[:, 0], nodes[:, 1], 'kx', ms = 0.5)
+        ax.set_xlabel("No. of nucleotides")
+        ax.set_ylabel("No. of strands")
         for edge in self.edges:
             ax.arrow(
                 edge.vertices[0][0], 
                 edge.vertices[0][1], 
                 edge.vector[0], 
                 edge.vector[1], 
-                width=0.05,
+                width=0.02,
                 length_includes_head=True)
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect(3)
         if fout:
-            plt.savefig(fout)
+            plt.savefig(fout, dpi=500)
         plt.show()
 
     def system(self, **kwargs):
