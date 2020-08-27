@@ -10,7 +10,7 @@ import random
 from copy import deepcopy
 
 from .nucleotide import Nucleotide
-from .utils import get_rotation_matrix
+from .utils import get_rotation_matrix, round_to_multiple
 
 # Constants
 PI = np.pi
@@ -162,6 +162,8 @@ def generate_helix(
     a1: np.ndarray = np.array([1., 0., 0.]),
     initial_rotation: float = None,
     double: bool = False,
+    enforce_180: bool = True,
+    bp_per_turn: float = 10.45,
 ) -> List[Strand]:
 
     # handle sequence/n arguments
@@ -192,21 +194,23 @@ def generate_helix(
     if initial_rotation:
         a1 = get_rotation_matrix(direction, initial_rotation)
 
+    if enforce_180 and not n == 1:
+        half_turns = round_to_multiple(n/bp_per_turn, 0.5, 1)
+        # minus one because for x nt there will only be x-1 bonds
+        angle = np.radians(360*half_turns / (n-1) )
+    else:
+        angle = 0.626
+
     # initialise strand list
     strands = []
 
     # create main strand
     strand = Strand()
     strand.add_nucleotide(
-            Nucleotide(
-                sequence[0],
-                start_position,
-                a1=a1,
-                a3=direction,
-            )
-        )
+        Nucleotide(sequence[0], start_position, a1=a1, a3=direction))
+
     for base in sequence[1:]:
-        strand.add_nucleotide(strand.nucleotides[-1].make_5p(base))
+        strand.add_nucleotide(strand.nucleotides[-1].make_5p(base, angle))
 
     # add to strand list which will be returned
     strands.append(strand.copy())
