@@ -1,8 +1,7 @@
 from typing import List
 
 import numpy as np
-from shapely.geometry import MultiPoint
-from shapely import geometry
+from shapely.geometry import MultiPoint, Polygon
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
@@ -14,88 +13,10 @@ import itertools
 from .node import LatticeNode
 from .route import LatticeRoute
 from ..oxdna.strand import POS_STACK, FENE_LENGTH
+from .utils import find_closest, find_crossover_locations
+from ..oxdna.utils import round_to_multiple
 
 from bisect import bisect_left, bisect_right
-
-
-def find_crossover_locations(
-    max_size: int = 30,
-    bp_per_turn: float = 10.45,
-    kind: str = "half",
-) -> dict:
-    """
-    Function which returns an array containing the best locations 
-    for half or whole turns of the DNA strand where the strand will
-    stay in plane and have the least strain/stress build-up.
-    
-    This is computed given the number of basepairs per turn
-    & locations are given in no. of base pairs
-
-    Arguments:
-
-        bp_per_turn --- (default: 10.45)
-        kind --- either half turns or whole turns
-        max_size --- max no. of turns to base pairs to the list
-    """
-    crossover_location = [0]
-    no_of_bp = 0
-
-    # half turn
-    if kind == "half":
-        i = 1  # every odd number
-        while no_of_bp < max_size:
-            # minus 1 at the end because Python indexing starts at 0
-            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - 1)
-            crossover_location.append(no_of_bp)
-            i += 2
-
-    # whole turns
-    elif kind == "whole":
-        i = 2  # every even number
-        while no_of_bp < max_size:
-            # minus 1 at the end because Python indexing starts at 0
-            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - 1)
-            crossover_location.append(no_of_bp)
-            i += 2
-    return crossover_location
-
-
-def round_to_multiple(n, mo=0.34, decimal_places=2):
-    """
-    Function rounds to the nearest multiple of value given
-    Returns output to (default) 2 decimal places
-
-    Arguments:
-
-        n --- value (integer or float) to round  
-        mo --- "multiple_of" is the value (integer or float) which 
-        we want to round to a multiple of  
-        decimal_places --- no. of decimals to return
-    """
-    a = (n // mo) * mo  # Smaller multiple
-    b = a + mo  # Larger multiple
-    closest_multiple = b if n - a > b - n else a  # Return of closest of two
-    return round(closest_multiple, decimal_places)
-
-
-def find_closest(myList, myNumber):
-    """
-    Credit: https://stackoverflow.com/questions/12141150
-    Assumes myList is sorted. Returns closest value to myNumber.
-
-    If two numbers are equally close, return the smallest number.
-    """
-    pos = bisect_left(myList, myNumber)
-    if pos == 0:
-        return myList[0]
-    if pos == len(myList):
-        return myList[-1]
-    before = myList[pos - 1]
-    after = myList[pos]
-    if after - myNumber < myNumber - before:
-        return after + 1
-    else:
-        return before + 1
 
 
 def modify_lattice_row(grid: np.ndarray,
@@ -225,7 +146,7 @@ class Lattice:
             
         """
         self.polygon_array = polygon_vertices.astype(dtype=np.float64)
-        self.polygon = geometry.Polygon(polygon_vertices)
+        self.polygon = Polygon(polygon_vertices)
         self.grid_size = grid_size
         self.x_spacing = grid_size[0]
         self.y_spacing = grid_size[1]
