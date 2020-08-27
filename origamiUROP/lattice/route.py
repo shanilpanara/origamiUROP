@@ -128,7 +128,7 @@ class LatticeRoute(Strand):
 
         return strands
 
-    def plot(self, ax : plt.Axes = None, fout : str = None):
+    def plot(self, ax : plt.Axes = None, fout : str = None, aspect : int = 5):
         nodes = np.array(self.nodes)
         if not ax:
             fig, ax = plt.subplots()
@@ -146,7 +146,7 @@ class LatticeRoute(Strand):
                 edge.vector[1], 
                 width=0.02,
                 length_includes_head=True)
-        plt.gca().set_aspect(3)
+        plt.gca().set_aspect(aspect)
         if fout:
             plt.savefig(fout, dpi=500)
         plt.show()

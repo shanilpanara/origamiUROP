@@ -329,14 +329,16 @@ class Lattice:
             # calculate current difference between end/start points of row0 & row1
             if R:
                 right0 = int(np.argwhere(row0)[-1])
-                right1 = int(np.argwhere(row1)[-1])
+                right1 = int(np.argwhere(row1)[-1])                
                 if right0 - right1 == 0: continue
-                assert right0 - right1 != 0
+                
+                extra_turns_right = int(round(abs(right1-right0) / bp_per_turn, 0))
             else:
                 left0 = int(np.argwhere(row0)[0])
                 left1 = int(np.argwhere(row1)[0])
                 if left0 - left1 == 0: continue
-                assert left0 - left1 != 0
+
+                extra_turns_left = int(round(abs(left1-left0) / bp_per_turn, 0))
 
             ### Initialise some useful values
             # find index in poss_cross correlating to no. of possible crossovers in that row
@@ -357,8 +359,6 @@ class Lattice:
                 row1 = np.roll(row1, row1_roll)
 
             elif abs(extra_turns) > 1:
-                extra_turns_right = int(round(abs(right1-right0) / bp_per_turn, 0))
-                extra_turns_left = int(round(abs(left1-left0) / bp_per_turn, 0))
                 if not top_bigger:
                     # shorten the end of row 0
                     if row_width[0] <= poss_cross[3] and not all_same(width_tracker[-3:-1]):
