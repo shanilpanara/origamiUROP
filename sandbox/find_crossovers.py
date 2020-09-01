@@ -1,55 +1,8 @@
 import itertools
-from origamiUROP.lattice import Lattice
-
-def find_crossover_locations(
-    max_size: int = 30,
-    bp_per_turn: float = 10.45,
-    kind: str = "half",
-    origin: int = 0
-) -> dict:
-    """
-    Function which returns an array containing the best locations 
-    for half or whole turns of the DNA strand where the strand will
-    stay in plane and have the least strain/stress build-up.
-    
-    This is computed given the number of basepairs per turn
-    & locations are given in no. of base pairs
-
-    Arguments:
-    bp_per_turn - (default: 10.45)
-    kind - either half turns or whole turns
-    max_size - max no. of turns to base pairs to the list
-    origin - what number crossovers start at, either 0 (python indexing) or 1 
-    """
-
-    no_of_bp = 0
-    if origin == 0: # i.e. Python indexing
-        crossover_location = [0]
-        shift = 1
-    else:
-        crossover_location = [1]
-        shift = 0
-
-
-    # half turn
-    if kind == "half":
-        i = 1  # every odd number
-        while no_of_bp < max_size:
-            # minus 1 at the end because Python indexing starts at 0
-            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - shift)
-            crossover_location.append(no_of_bp)
-            i += 2
-
-    # whole turns
-    elif kind == "whole":
-        i = 2  # every even number
-        while no_of_bp < max_size:
-            # minus 1 at the end because Python indexing starts at 0
-            no_of_bp = int(round(bp_per_turn * 0.5 * i, 0) - shift)
-            crossover_location.append(no_of_bp)
-            i += 2
-    return crossover_location
-
+from origamiUROP.lattice.utils import find_crossover_locations
+import pandas as pd
+from typing import List
+from origamiUROP.lattice import Lattice, LatticeNode, LatticeRoute
 
 def calculate_row_size(*half_turn_sizes: int):
     """
@@ -96,9 +49,97 @@ def get_row_sizes(max_row_size, columns, bp_per_turn: float = 10.45):
     
     return rowsize_list, rowsize_dict
 
-rowsize_list, rowsize_dict = get_row_sizes(100, 2)
-print(rowsize_list)
-print(rowsize_dict)
+rowsize_list, rowsize_dict = get_row_sizes(80, columns = 3)
+
+df = pd.DataFrame.from_dict(rowsize_dict, orient = 'index')
+df.sort_index(ascending=True, inplace=True)
+# df.transpose()
+display(df)
+
 
 class DNAScaffold(Lattice):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        """
+        Subclass of Lattice. Inherits all atributes and methods from this parent class.
+
+        When a DNASnake object is generated, it refers to a DNA Scaffold 
+        with a maximum of 2 crossovers per "row" in the lattice
+        """
+        self.quantised_array = self.quantise_rows(self.intersected_array, self.poss_cross, self.padding)
+        # self.straightened_array = self.straighten_edges(self.quantised_array, self.straightening_factor)
+
+
+        # # Final Lattice and crossovers
+        # self.final_array = ?????
+        # self.crossover_array = self.get_crossovers(self.final_array, self.start_side, self.poss_cross)
+
+        # # Lattice and Crossovers as coordinates
+        # self.final_coords = self.array_to_coords(self.final_array)
+        # self.crossover_coords = self.array_to_coords(self.crossover_array)
+
+
+        """
+        Evening thoughts 27/08/20
+        I really think that trying to get a way to sift through the possible crossover pairs
+        (when there are multiple) for a given row size, will be hard if we just do a blanket
+        "find crossovers by overlaying onto the quantised lattice" and then try to figure out an
+        algorithm from there....
+
+        Instead i think we need to create a way of:
+        1. find crossover sizes for row
+        2. choose the first one, if there is a second, store it for later
+        3. THEN make a crossover lattice (for plotting)
+        4. Look at the lattice and figure out if we need any other rules, e.g. doubling up rows or smthng
+        5. Then cycle through rows and add (or even generate) vertices -> `LatticeNodes` for that row.
+            Where the first set will be added to one list, the second set to another list (in reverse? idk)
+            Then make a mega `vertex` list
+        6. Probs gotta think about the double crossover (i.e. at the top/bottom when we want to change direction entirely). That row is gonna have to be a "whole turn" crossover, will be interesting to implement this.
+        7. Once we've figured that out, we come back to looking at multiple ways of routing the scaffold 
+        through the lattice
+        """
+
+    def route(self, crossovers = None, *args, **kwargs) -> List[LatticeNode]:
+        """
+        Generate DNASnake scaffold route, returns list of LatticeNode objects
+        
+        Arguments:
+            crossovers - binary array or list of coordinates of crossovers
+            *args & **kwargs - correspond to those of the `LatticeRoute` class
+        
+        Note:
+            Different subclasses will use `Lattice` in a different way.
+            Moreover, they will probably have a different routing algorithm
+        """
+        if crossovers is None:
+            coords = self.crossover_coords
+        elif np.shape(crossovers)[1] not in [2,3]: # if array
+            coords = self.array_to_coords(crossovers)
+        else:
+            coords = crossovers
+
+        # add 3rd column (z = 0)
+        shape = np.shape(coords)
+        if shape[1] != 3:
+            coords = np.c_[coords, np.zeros(shape[0])]
+
+        crossovers_per_row = 2
+        lattice_rows = int(coords[:, 1].max() + 1)  # coords counts from 0
+        vertices_in_route = int(crossovers_per_row * lattice_rows)
+        vertex_list = np.zeros((vertices_in_route, 3))
+
+        # Find final crossover from left or right and make it a node
+        for row in range(0, lattice_rows):
+            vertex_index_L = bisect_left(coords[:, 1], row)
+            vertex_index_R = bisect_right(coords[:, 1], row) - 1
+            if row % 2 == 0:  # if even
+                vertex_list[row * 2] = coords[vertex_index_L]
+                vertex_list[row * 2 + 1] = coords[vertex_index_R]
+            else:  # if odd
+                vertex_list[row * 2] = coords[vertex_index_R]
+                vertex_list[row * 2 + 1] = coords[vertex_index_L]
+
+        # print(vertex_list)
+
+        node_list = [LatticeNode(i) for i in vertex_list]
+        return LatticeRoute(node_list, *args, **kwargs)
