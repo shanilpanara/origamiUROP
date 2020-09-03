@@ -128,7 +128,15 @@ class LatticeRoute(Strand):
 
         return strands
 
-    def plot(self, ax : plt.Axes = None, fout : str = None, aspect : int = 5):
+    def get_strand(self):
+        nucleotides = []
+        _strands = self.update_strands()
+        for strand in _strands:
+            nucleotides += strand.nucleotides
+        _strand = Strand(nucleotides=nucleotides)
+        return [_strand, _strands]
+
+    def plot(self, ax : plt.Axes = None, fout : str = None, aspect : int = 5, colour = 'k'):
         nodes = np.array(self.nodes)
         if not ax:
             fig, ax = plt.subplots()
@@ -145,19 +153,19 @@ class LatticeRoute(Strand):
                 edge.vector[0], 
                 edge.vector[1], 
                 width=0.02,
+                color = colour,
                 length_includes_head=True)
         plt.gca().set_aspect(aspect)
         if fout:
             plt.savefig(fout, dpi=500)
         plt.show()
 
-    def system(self, **kwargs):
-        nucleotides = []
-        strands = self.update_strands()
-        for strand in strands:
-            nucleotides += strand.nucleotides
-        strand = Strand(nucleotides=nucleotides)
-
+    def system(self, strands = None, **kwargs):
+        _strand = [self.get_strand()[0]]
+        if strands:
+            for strand in strands:
+                _strand.append(strand)
         _system = System(kwargs.get('box', np.array([50., 50., 50.])))
-        _system.add_strand(strand)
+        _system.add_strands(_strand)
+
         return _system
