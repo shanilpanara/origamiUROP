@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ds_length = np.arange(args.double_stranded[0], args.double_stranded[2]+1, args.double_stranded[1])
     ss_length = np.arange(args.single_stranded[0], args.single_stranded[2]+1, args.single_stranded[1])
 
-    sim_nb = 0 
+    sim_nb = 0  
 
     for i in range (len(tot_length)):
         for j in range (len(ds_length)):

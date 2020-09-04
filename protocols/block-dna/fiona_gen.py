@@ -21,6 +21,7 @@ def generate_system(
     Generates an oxDNA system containing a single piece of DNA
     which has blocks of equal size of double-stranded portions
     and single-stranded portions.
+    
 
     Parameters:
         n - number of nucleotides e.g. 100
