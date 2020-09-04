@@ -14,7 +14,7 @@ def square():
 
 def square_route():
     polygon = square()
-    lattice = polygon.lattice(
+    lattice = polygon.dna_snake(
         grid_size=(DIST_SQUARE, 5.44)
     )
     route = lattice.route()

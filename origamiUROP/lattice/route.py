@@ -8,6 +8,7 @@ from ..tools import DNANode, DNAEdge
 from .edge import LatticeEdge
 from .node import LatticeNode
 from ..oxdna import Strand, System
+from ..oxdna.strand import generate_helix, POS_BACK, FENE_LENGTH
 
 class LatticeRoute(Strand):
     """
@@ -20,7 +21,7 @@ class LatticeRoute(Strand):
         super().__init__(self._nucleotides)
 
     @property
-    def nodes(self):
+    def nodes(self) -> List[LatticeNode]:
         return self._nodes
 
     def add_node(self, addition: LatticeNode, index: int = None, update : bool = False):
@@ -92,28 +93,79 @@ class LatticeRoute(Strand):
             strand = edge.strand()[0].copy()
             self._nucleotides += strand.nucleotides
 
-    def plot(self, ax : plt.Axes = None, fout : str = None):
+    def update_strands(self):
+        """
+        Generate strands between 2D lattice nodes,
+        then generate a single strand representing the route
+        """
+        strands = []
+        edge_0 = self.edges[0]
+        strand = generate_helix(n = edge_0.nt_length,
+                                start_position= edge_0.vertices[0],
+                                direction = edge_0.unit_vector,
+                                a1 = edge_0.perp_vector)[0]
+        strands.append(strand.copy())
+
+        if len(self.edges) < 2:
+            return strands            
+
+        for i in range(2,len(self.edges)+1,2):
+
+            last_nuc = strands[-1].nucleotides[-1]
+            direction = -last_nuc._a3
+            a1 = -last_nuc._a1
+
+            # ensure the backbone position is FENE_LENGTH away from
+            # the backbone position of the previous nucleotide
+            start = last_nuc.pos_back + (FENE_LENGTH - POS_BACK) * a1
+
+            # generate strand above that's going in opposite direction
+            strand = generate_helix(n=self.edges[i].nt_length,
+                                    start_position=start,
+                                    direction=direction,
+                                    a1=a1)[0]
+            strands.append(strand)
+
+        return strands
+
+    def get_strand(self):
+        nucleotides = []
+        _strands = self.update_strands()
+        for strand in _strands:
+            nucleotides += strand.nucleotides
+        _strand = Strand(nucleotides=nucleotides)
+        return [_strand, _strands]
+
+    def plot(self, ax : plt.Axes = None, fout : str = None, aspect : int = 5, colour = 'k'):
         nodes = np.array(self.nodes)
         if not ax:
             fig, ax = plt.subplots()
-        plt.grid(True)
-        ax.xaxis.set_major_locator(MultipleLocator(1))
-        ax.yaxis.set_major_locator(MultipleLocator(1))
-        ax.plot(nodes[:, 0], nodes[:, 1], 'ko')
+        #plt.grid(True)
+        ax.xaxis.set_major_locator(MultipleLocator(20))
+        ax.yaxis.set_major_locator(MultipleLocator(5))
+        ax.plot(nodes[:, 0], nodes[:, 1], 'kx', ms = 0.5)
+        ax.set_xlabel("No. of nucleotides")
+        ax.set_ylabel("No. of strands")
         for edge in self.edges:
             ax.arrow(
                 edge.vertices[0][0], 
                 edge.vertices[0][1], 
                 edge.vector[0], 
                 edge.vector[1], 
-                width=0.05,
+                width=0.02,
+                color = colour,
                 length_includes_head=True)
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect(aspect)
         if fout:
-            plt.savefig(fout)
+            plt.savefig(fout, dpi=500)
         plt.show()
 
-    def system(self, **kwargs):
+    def system(self, strands = None, **kwargs):
+        _strand = [self.get_strand()[0]]
+        if strands:
+            for strand in strands:
+                _strand.append(strand)
         _system = System(kwargs.get('box', np.array([50., 50., 50.])))
-        _system.add_strand(self)
+        _system.add_strands(_strand)
+
         return _system
