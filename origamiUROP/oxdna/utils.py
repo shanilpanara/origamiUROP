@@ -33,3 +33,23 @@ def next_5p(
     new_pos = new_base - a1 * SHIFT_BASE
     new_pos += SHIFT_ROUND * np.cross(a3, a1)
     return new_pos
+
+def get_box() -> np.ndarray:
+    pass
+
+def round_to_multiple(n, mo=0.34, decimal_places=2):
+    """
+    Function rounds to the nearest multiple of value given
+    Returns output to (default) 2 decimal places
+
+    Arguments:
+
+        n --- value (integer or float) to round  
+        mo --- "multiple_of" is the value (integer or float) which 
+        we want to round to a multiple of  
+        decimal_places --- no. of decimals to return
+    """
+    a = (n // mo) * mo  # Smaller multiple
+    b = a + mo  # Larger multiple
+    closest_multiple = b if n - a > b - n else a  # Return of closest of two
+    return round(closest_multiple, decimal_places)
