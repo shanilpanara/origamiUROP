@@ -8,6 +8,7 @@ from matplotlib.ticker import MultipleLocator
 import pandas as pd
 from typing import List
 from itertools import cycle
+from origamiUROP.polygons import BoundaryPolygon
 
 class StapleNode(DNANode):
     def __init__(self, position : np.ndarray):
@@ -86,10 +87,10 @@ class StapleCollection:
     def add_staples(self, staple_strand: Strand):
         self._strands.append(staple_strand)
 
-    def plot_nodes(self, strand: Strand, ax, colour = 'r', width = 0.02, **kwargs):
+    def plot_nodes(self, strand: Strand, ax, colour = 'r', width = 0.01, **kwargs):
         nodes = np.array(strand.nodes)
         #plt.grid(True)
-        ax.plot(nodes[:, 0], nodes[:, 1], 'bx', ms = 0.5)
+        ax.plot(nodes[:, 0], nodes[:, 1], 'k', ms = 0.5, alpha = 0)
         ax.xaxis.set_major_locator(MultipleLocator(10))
         ax.yaxis.set_major_locator(MultipleLocator(5))
         ax.set_xlabel("No. of nucleotides")
@@ -102,6 +103,7 @@ class StapleCollection:
                 edge.vector[1], 
                 width=width,
                 color = colour,
+                head_width = 0.1,
                 length_includes_head=True, **kwargs)
     
 
@@ -112,7 +114,7 @@ class StapleCollection:
         else:
             colours = cycle((colour))
         if route:
-            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.1, alpha = 0.05)
+            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.05, alpha = 0.05)
         for staple in self.staples:
 
             self.plot_nodes(strand = staple, ax = ax, colour = next(colours))
@@ -190,9 +192,35 @@ class ScaffoldRows:
         
 
 def side_staples(route : LatticeRoute, staple_width = 16):
+    # import scaffold as formed of its constituent rows
+    scaffold_rows = route.get_strand()[1]
     scaffold = ScaffoldRows(route)
     staples = []
+
+    for row, info in scaffold.info.iterrows():
+        x2 = info["bounds"][0]
+        if info["start side"] == "left":
+            x1 = x2 + staple_width
+        elif info["start side"] == "right":
+            x1 = x2 - staple_width
+        
+        staple_nodes = [
+            StapleNode([x1, row, 0.0]),
+            StapleNode([x2, row, 0.0]),
+            StapleNode([x2, row+1, 0.0]),
+            StapleNode([x1, row+1, 0.0])]
+
+        staples.append(StapleRoute(scaffold_rows, staple_nodes))
+
+    return StapleCollection(staples)
+
+
+def side_staples2(route : LatticeRoute, staple_width = 16):
+    # import scaffold as formed of its constituent rows
     scaffold_rows = route.get_strand()[1]
+    scaffold = ScaffoldRows(route)
+    staples = []
+
     for row, info in scaffold.info.iterrows():
         x2 = info["bounds"][0]
         if info["start side"] == "left":
@@ -223,6 +251,10 @@ def test_StapleRoute(route: LatticeRoute):
     
     return StapleRoute(scaffold_rows, staple_nodes)
 
+def generate_route(polygon_vertices: np.ndarray):
+    polygon = BoundaryPolygon(polygon_vertices)
+    lattice = polygon.dna_snake(straightening_factor=5, start_side="left")
+    return lattice.route()
 
 if __name__ == "__main__":
     half_turn_indices   = [4, 15, 25, 36, 46, 56, 67, 77, 88, 98, 109]
@@ -262,19 +294,37 @@ if __name__ == "__main__":
         [56, 15, 0],
         [0,15,0]
     ]
+    trapREV = np.array([[0.,10.,0.],[2.5,4.,0.],[7.5,4.,0.],[10.,10.,0.]])
+    no = 0.85
+    hexagon = np.array(
+        [[0, 1, 0], [no, 0.5, 0], [no, -0.5, 0], [0, -1, 0], [-no, -0.5, 0], [-no, 0.5, 0]])  
+    plus = np.array([
+        [1.,0.,0.], [2.,0.,0.], [2.,1.,0.], [3.,1.,0.], [3.,2.,0.], [2.,2.,0.],
+        [2.,3.,0.], [1.,3.,0.], [1.,2.,0.], [0.,2.,0.], [0.,1.,0.], [1.,1.,0.]])
+    diamond = np.array([[1.,0.,0.],[2.,1.,0.],[1.,2.,0.],[0.,1.,0.]])
+    triangle = np.array([[0,0,0],[5,9,0],[10,0,0]])
+    stacked_I = np.array([
+    [0.,0.,0.],[3.,0.,0.],[3.,1.,0.],[2.,1.,0.], [2.,2.,0.],[3.,2.,0.],
+    [3.,3.,0.],[2.,3.,0.],[2.,4.,0.],[3.,4.,0.],[3.,5.,0.],[0.,5.,0.],[0.,4.,0.],[1.,4.,0.],
+    [1.,3.,0.],[0.,3.,0.], [0.,2.,0.],[1.,2.,0.],[1.,1.,0.],[0.,1.,0.]
+    ])
 
-    nodes = [LatticeNode(np.array(i)) for i in route_vertices]
-    route = LatticeRoute(nodes)
-    # fig, ax = plt.subplots()
-    # route.plot(ax = ax)
+    # nodes = [LatticeNode(np.array(i)) for i in route_vertices]
+    # route = LatticeRoute(nodes)
 
+    """ Generate the route from polygon """
+    route = generate_route(trapREV*6)
+    route.plot()
 
-    # test, scaf = test_StapleRoute(route)
-    # system = System(np.array([50,50,50]))
-    # system.add_strands(scaf)
-    # system.write_oxDNA("scaffold")
+    """ Run side_staples """
     collection = side_staples(route)
     collection.plot(route)
     # system = route.system(collection.staples)
     # system.write_oxDNA("lol")
     
+
+    """ Test Scaffold """
+    # test, scaf = test_StapleRoute(route)
+    # system = System(np.array([50,50,50]))
+    # system.add_strands(scaf)
+    # system.write_oxDNA("scaffold")
