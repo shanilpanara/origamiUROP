@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
 from typing import List
+from itertools import cycle
 
 class StapleNode(DNANode):
     def __init__(self, position : np.ndarray):
@@ -104,13 +105,17 @@ class StapleCollection:
                 length_includes_head=True, **kwargs)
     
 
-    def plot(self, route: LatticeRoute = None, fout: str = None):
+    def plot(self, route: LatticeRoute, fout: str = None, colour: str = None):
         fig, ax = plt.subplots()
+        if not colour:
+            colours = cycle(('r','b'))
+        else:
+            colours = cycle((colour))
         if route:
-            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.1, alpha = 0.)
+            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.1, alpha = 0.05)
         for staple in self.staples:
-            colour = np.random.rand(3,)
-            self.plot_nodes(strand = staple, ax = ax, colour = colour)
+
+            self.plot_nodes(strand = staple, ax = ax, colour = next(colours))
         
         plt.gca().set_aspect(5)
         if fout:
@@ -183,6 +188,7 @@ class ScaffoldRows:
                 "unpaired bases (16)": self.unpaired_bases(self._staple_widths[1]),
             })
         
+
 def side_staples(route : LatticeRoute, staple_width = 16):
     scaffold = ScaffoldRows(route)
     staples = []
@@ -203,7 +209,6 @@ def side_staples(route : LatticeRoute, staple_width = 16):
         staples.append(StapleRoute(scaffold_rows, staple_nodes))
 
     return StapleCollection(staples)
-    
 
 def test_StapleRoute(route: LatticeRoute):
     x1 = 0
@@ -260,8 +265,8 @@ if __name__ == "__main__":
 
     nodes = [LatticeNode(np.array(i)) for i in route_vertices]
     route = LatticeRoute(nodes)
-    fig, ax = plt.subplots()
-    route.plot(ax = ax)
+    # fig, ax = plt.subplots()
+    # route.plot(ax = ax)
 
 
     # test, scaf = test_StapleRoute(route)
@@ -269,6 +274,7 @@ if __name__ == "__main__":
     # system.add_strands(scaf)
     # system.write_oxDNA("scaffold")
     collection = side_staples(route)
-    system = route.system(collection.staples)
-    system.write_oxDNA("lol")
+    collection.plot(route)
+    # system = route.system(collection.staples)
+    # system.write_oxDNA("lol")
     
