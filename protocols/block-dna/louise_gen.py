@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 import numpy as np
 
 from fiona_gen import generate_system
-from system import System
+from system import SystemWithFolder
 
 if __name__ == '__main__':
     parser = ArgumentParser()
