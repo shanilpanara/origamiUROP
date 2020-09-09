@@ -2,13 +2,16 @@ from origamiUROP.lattice import LatticeRoute, LatticeEdge, LatticeNode
 from origamiUROP.oxdna import Strand, System
 from origamiUROP.tools import DNANode, DNAEdge
 from origamiUROP.lattice.utils import find_crossover_locations
+from origamiUROP.polygons import BoundaryPolygon
+
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
-import pandas as pd
+
 from typing import List
 from itertools import cycle
-from origamiUROP.polygons import BoundaryPolygon
+from copy import deepcopy
 
 class StapleNode(DNANode):
     def __init__(self, position : np.ndarray):
@@ -67,14 +70,22 @@ class StapleRoute(Strand):
             for nucleotide in nucleotides:
                 self._nucleotides.append(nucleotide)
 
-
-
 class StapleCollection:
     """ Probably need to edit this such that
     it becomes easy to join staples on the same row together
     not sure, how to implement that yet """
-    def __init__(self, strands: List[Strand] = []):
+    def __init__(self, strands: List[Strand] = [], route: LatticeRoute = None):
         self._strands = strands
+        self.route = route
+                
+        # Import scaffold strands as its constituent rows
+        self.scaffold_strands = route.get_strand()[1]
+        # Import scaffold information class
+        self.scaffold_rows = Scaffold(route)
+        
+        # Two copies of scaffold array. The stapled array will change as staples are added
+        self.scaffold_array = self.scaffold_rows.array
+        self.stapled_array = deepcopy(self.scaffold_array)
     
     @property
     def staples(self) -> List[Strand]:
@@ -87,11 +98,44 @@ class StapleCollection:
     def add_staples(self, staple_strand: Strand):
         self._strands.append(staple_strand)
 
+    def generate_staples(self, route : LatticeRoute, staple_width = 16):
+        # deal with start case
+
+        # deal with end case
+
+        # deal with cases where next row is bigger
+
+        # deal with cases where next row is smaller
+
+        # deal with the rest :)
+        
+
+    #     # get all the information from rows
+
+        
+    #     for row, info in scaffold.info.iterrows():
+    #         x2 = info["bounds"][0]
+    #         if info["start side"] == "left":
+    #             x1 = x2 + staple_width
+    #         elif info["start side"] == "right":
+    #             x1 = x2 - staple_width
+            
+    #         staple_nodes = [
+    #             StapleNode([x1, row, 0.0]),
+    #             StapleNode([x2, row, 0.0]),
+    #             StapleNode([x2, row+1, 0.0]),
+    #             StapleNode([x1, row+1, 0.0])]
+
+    #         staples.append(StapleRoute(scaffold_rows, staple_nodes))
+
+    #     return StapleCollection(staples)
+        pass
+
     def plot_nodes(self, strand: Strand, ax, colour = 'r', width = 0.01, **kwargs):
         nodes = np.array(strand.nodes)
         #plt.grid(True)
         ax.plot(nodes[:, 0], nodes[:, 1], 'k', ms = 0.5, alpha = 0)
-        ax.xaxis.set_major_locator(MultipleLocator(10))
+        ax.xaxis.set_major_locator(MultipleLocator(2))
         ax.yaxis.set_major_locator(MultipleLocator(5))
         ax.set_xlabel("No. of nucleotides")
         ax.set_ylabel("No. of strands")
@@ -125,52 +169,61 @@ class StapleCollection:
 
         plt.show()
 
-
-
-    
-
-class ScaffoldRows:
+class Scaffold:
     def __init__(self,route: LatticeRoute, staple_widths = [5, 16, 26]):
         self.route = route
-        self._staple_widths = staple_widths
+        self.edges = route.edges[0::2] #only rows which are horizontal
+        self.staple_widths = staple_widths
+        self.sizes = self.get_row_sizes()
+        self.start_side = self.get_start_side()
 
-    @property
-    def sizes(self) -> list:
-        """ Returns length of all the rows"""
-        _row_sizes = []
-        for i in range(0,len(self.route.edges),2):
-            _row_sizes.append(self.route.edges[i].nt_length + 1)
-        return _row_sizes
+        self.startx = self.get_startx()
+        self.endx = self.get_endx()
+        self.bounds = self.get_bounds()
 
-    @property
-    def bounds(self) -> list:
-        """ Returns x coord of start and end point """
-        _bounds = []
-        for i in range(0,len(self.route.edges),2):
-            start = self.route.edges[i].vertices[0][0]
-            end = self.route.edges[i].vertices[1][0]
-            _bounds.append([start,end])
-        return _bounds
+        self.array = self.get_scaffold_array()
 
-    @property
-    def start_side(self) -> list:
-        """ Returns left or right """
-        _start_side = []
-        for i in range(0,len(route.nodes), 2):
-            side = "left" if route.nodes[i][0]-route.nodes[i+1][0] < 0 else "right"
-            _start_side.append(side)
-        return _start_side
+
+    def get_row_sizes(self) -> list:
+        """ Returns length of each row """
+        return [edge.nt_length + 1 for edge in self.edges]
+    
+    def get_startx(self) -> list:
+        """ Returns x coord of start point on each row """
+        return [int(edge.vertices[0][0]) for edge in self.edges]
+    
+    def get_endx(self) -> list:
+        """ Returns x coord of end point on each row """
+        return [int(edge.vertices[1][0]) for edge in self.edges]
+    
+    def get_bounds(self) -> list:
+        """ Returns x coord of start and end point on each row """
+        return [[int(edge.vertices[0][0]),int(edge.vertices[1][0])] for edge in self.edges]    
+    
+    def get_start_side(self) -> list:
+        """ Returns left or right as the start side of each row"""
+        nodes0 = self.route.nodes[0::2]
+        nodes1 = self.route.nodes[1::2]
+        return ["left" if node0[0]-node1[0] < 0 else "right" for (node0,node1) in zip(nodes0, nodes1)]
+
+    def get_scaffold_array(self) -> np.ndarray:
+        # Find max row width and no. of columns and create empty grid
+        scaffold = np.zeros( (len(self.edges), max(self.sizes)) )
+        for row in range(len(self.edges)):
+            scaffold[row][min(self.bounds[row]):max(self.bounds[row])+1] = 1
+        return scaffold
+
 
     def n_staples(self, staple_width = None):
         """ Returns no. of staples per row """
         if not staple_width: # default to 16
-            staple_width = self._staple_widths[1]
+            staple_width = self.staple_widths[1]
         return [int(i/staple_width) for i in self.sizes]
     
     def unpaired_bases(self, staple_width = None):
         """ Returns no. of unpaired bases per row """
         if not staple_width: # default to 16
-            staple_width = self._staple_widths[1]
+            staple_width = self.staple_widths[1]
         return [int(i % staple_width) for i in self.sizes]
 
     @property
@@ -182,61 +235,37 @@ class ScaffoldRows:
         """
         return pd.DataFrame({
                 "size": self.sizes,
-                "bounds": self.bounds,
                 "start side": self.start_side,
-                "staples (5)": self.n_staples(self._staple_widths[0]),
-                "staples (16)": self.n_staples(self._staple_widths[1]),
-                "unpaired bases (5)": self.unpaired_bases(self._staple_widths[0]),
-                "unpaired bases (16)": self.unpaired_bases(self._staple_widths[1]),
+                "bounds": self.bounds,
+                "staples (5)": self.n_staples(self.staple_widths[0]),
+                "staples (16)": self.n_staples(self.staple_widths[1]),
+                "unpaired bases (5)": self.unpaired_bases(self.staple_widths[0]),
+                "unpaired bases (16)": self.unpaired_bases(self.staple_widths[1]),
             })
         
 
-def side_staples(route : LatticeRoute, staple_width = 16):
-    # import scaffold as formed of its constituent rows
-    scaffold_rows = route.get_strand()[1]
-    scaffold = ScaffoldRows(route)
-    staples = []
+# def side_staples(route : LatticeRoute, staple_width = 16):
+#     # import scaffold as formed of its constituent rows
+#     scaffold_rows = route.get_strand()[1]
+#     scaffold = Scaffold(route)
+#     staples = []
 
-    for row, info in scaffold.info.iterrows():
-        x2 = info["bounds"][0]
-        if info["start side"] == "left":
-            x1 = x2 + staple_width
-        elif info["start side"] == "right":
-            x1 = x2 - staple_width
+#     for row, info in scaffold.info.iterrows():
+#         x2 = info["bounds"][0]
+#         if info["start side"] == "left":
+#             x1 = x2 + staple_width
+#         elif info["start side"] == "right":
+#             x1 = x2 - staple_width
         
-        staple_nodes = [
-            StapleNode([x1, row, 0.0]),
-            StapleNode([x2, row, 0.0]),
-            StapleNode([x2, row+1, 0.0]),
-            StapleNode([x1, row+1, 0.0])]
+#         staple_nodes = [
+#             StapleNode([x1, row, 0.0]),
+#             StapleNode([x2, row, 0.0]),
+#             StapleNode([x2, row+1, 0.0]),
+#             StapleNode([x1, row+1, 0.0])]
 
-        staples.append(StapleRoute(scaffold_rows, staple_nodes))
+#         staples.append(StapleRoute(scaffold_rows, staple_nodes))
 
-    return StapleCollection(staples)
-
-
-def side_staples2(route : LatticeRoute, staple_width = 16):
-    # import scaffold as formed of its constituent rows
-    scaffold_rows = route.get_strand()[1]
-    scaffold = ScaffoldRows(route)
-    staples = []
-
-    for row, info in scaffold.info.iterrows():
-        x2 = info["bounds"][0]
-        if info["start side"] == "left":
-            x1 = x2 + staple_width
-        elif info["start side"] == "right":
-            x1 = x2 - staple_width
-        
-        staple_nodes = [
-            StapleNode([x1, row, 0.0]),
-            StapleNode([x2, row, 0.0]),
-            StapleNode([x2, row+1, 0.0]),
-            StapleNode([x1, row+1, 0.0])]
-
-        staples.append(StapleRoute(scaffold_rows, staple_nodes))
-
-    return StapleCollection(staples)
+#     return StapleCollection(staples)
 
 def test_StapleRoute(route: LatticeRoute):
     x1 = 0
@@ -313,12 +342,12 @@ if __name__ == "__main__":
     # route = LatticeRoute(nodes)
 
     """ Generate the route from polygon """
-    route = generate_route(trapREV*6)
+    route = generate_route(trapREV*2)
     route.plot()
 
-    """ Run side_staples """
-    collection = side_staples(route)
-    collection.plot(route)
+    # """ Run side_staples """
+    # collection = side_staples(route)
+    # collection.plot(route)
     # system = route.system(collection.staples)
     # system.write_oxDNA("lol")
     
@@ -328,3 +357,5 @@ if __name__ == "__main__":
     # system = System(np.array([50,50,50]))
     # system.add_strands(scaf)
     # system.write_oxDNA("scaffold")
+    scaffold = Scaffold(route)
+    # scaffold.describe()
