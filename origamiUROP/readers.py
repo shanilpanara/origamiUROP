@@ -3,10 +3,10 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from oxdna import Nucleotide, Strand, System
+from .oxdna import Nucleotide, Strand, System
 
 class Reader:
-    
+
     columns = [
         'base',
         'x'   , 'y'   , 'z'  ,
@@ -29,11 +29,25 @@ class Reader:
         nucleotides: pd.DataFrame, 
         metadata: dict = None,
     ):
-        Reader._check_dataframe(nucleotides)
-        Reader._check_metadata(metadata)
+        try:
+            assert isinstance(self.dataframe, pd.DataFrame)
+        except:
+            raise TypeError(
+                'Reader: There is a problem accessing the '
+                'self.dataframe property - check that it exists for and it '
+                f'is a pd.DataFrame, currently it is a {self.dataframe.__class__}'
+            )
 
-        self._nucleotides = nucleotides
-        self._metadata = metadata
+        try:
+            self.metadata
+        except:
+            raise TypeError(
+                'Reader: There is a problem accessing the '
+                'self.metadata property - check that it exists'
+            )
+
+        Reader._check_dataframe(self.dataframe)
+        Reader._check_metadata(self.metadata)
         
         self._validate_strands()
 
@@ -95,19 +109,45 @@ class Reader:
         _system.add_strands(self.strands)
         return _system
 
-class LAMMPSDumpReader(Reader):
-    def __init__(self, fnames: List[str]):
-        pass
-
 class LAMMPSDataReader(Reader):
     def __init__(self, fname: str):
-        pass
+        super().__init__()
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        result = pd.DataFrame()
+        return result
+
+    @property
+    def metadata(self) -> dict:
+        result = {}
+        return result
+
+class LAMMPSDumpReader(Reader):
+    def __init__(self, fnames: List[str]):
+        data, dump = LAMMPSDumpReader.detect_filetypes(fnames)
+        super().__init__(self.dataframe, metadata=self.metadata)
+
+    @staticmethod
+    def detect_filetypes(fnames: List[str]):
+        return data, dump
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        result = pd.DataFrame()
+        return result
+
+    @property
+    def metadata(self) -> dict:
+        result = {}
+        return result
 
 class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):
         conf, top = OXDNAReader.detect_filetypes(fnames)
         super().__init__(self.dataframe, metadata=self.metadata)
 
+    @staticmethod
     def detect_filetypes(fnames: List[str]):
         conf = fnames[0]
         top = fnames[1]
