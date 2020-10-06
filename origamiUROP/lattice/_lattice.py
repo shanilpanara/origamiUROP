@@ -148,7 +148,7 @@ class Lattice:
             
         """
         self.polygon_array = polygon_vertices.astype(dtype=np.float64)
-        self.polygon = Polygon(polygon_vertices)
+        self.polygon = geometry.Polygon(polygon_vertices)
         self.grid_size = grid_size
         self.x_spacing = grid_size[0]
         self.y_spacing = grid_size[1]

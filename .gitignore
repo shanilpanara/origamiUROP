@@ -131,13 +131,19 @@ dmypy.json
 ### VisualStudioCode ###
 .vscode/*
 
-# config files not for testing
+# Generate files
 oxdna.*.conf
 oxdna.*.top
 lammps.*.conf
+cando.*.conf
 *.cndo
+*.lammpstrj
+*.dat
+*.ply
+*.stl
 
-# config files for testing
+
+# Test Files
 !oxdna.test.conf
 !oxdna.test.top
 
