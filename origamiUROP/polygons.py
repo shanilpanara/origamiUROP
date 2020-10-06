@@ -6,34 +6,25 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from origamiUROP.oxdna.strand import Strand, generate_helix
-from origamiUROP.oxdna import Nucleotide, System
-
-# class Vertex:
-#     """
-#     A Vertex is a point in space that is connected to other vertices
-
-#     Defined simply by: x, y and z (in 3D)
-#     """
-
-#     def __init__(self, position: np.ndarray):
-#         self.position = position
-#         self.x = position[:, 0]
-#         self.y = position[:, 1]
-
-#     def distance(self, another_vertex: "Vertex") -> float:
-#         return np.linalg.norm(self.position - another_vertex.position)
+from .oxdna import Nucleotide, System, Strand, generate_helix
+from .tools import DNAEdge, DNANode
+from .lattice import Lattice, DNASnake
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
+class Vertex(DNANode):
+    """
+    Geometric point in space.
+    """
+    def __init__(self, position : np.ndarray):
+        super().__init__(position)
 
-class Edge:
+class Edge(DNAEdge):
     """ 
     An Edge is a combination of two vertices and stores geometric information about this connection 
     """
 
     def __init__(self, vertex_1: list, vertex_2: list, edge_kind: int = 0):
-        self.vertices = np.array([vertex_1, vertex_2])
         # don't use type because that's a protected function in Python
         self.kind = EDGE_TYPE[edge_kind]
 
@@ -42,51 +33,13 @@ class Edge:
         elif (vertex_1 == vertex_2).all():
             raise ValueError("Given verticies must be different")
 
-    @property
-    def length(self):
-        return np.linalg.norm(self.vertices[1] - self.vertices[0])
-
-    @property
-    def vector(self) -> np.ndarray:
-        return self.vertices[1] - self.vertices[0]
-
-    @property
-    def unit_vector(self) -> np.ndarray:
-        return self.vector / (self.vector ** 2).sum() ** 0.5
-
-    @property
-    def perp_vector(self) -> np.ndarray:
-        """Perpendicular vector which lies in the xy plane"""
-        return np.cross(self.unit_vector, np.array([0, 0, 1]))
-
-    def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
-
-        if not sequence:
-            # in future version, this will not be so
-            # straightforward
-            no_of_nucleotides_in_edge = int(self.length)
-
-        else:
-            no_of_nucleotides_in_edge = len(sequence)
-
-        strands = generate_helix(
-            bp=no_of_nucleotides_in_edge,
-            sequence=sequence,
-            start_pos=self.vertices[0],
-            back_orient_a1=self.perp_vector,
-            base_orient_a3=self.unit_vector,
-            **kwargs,
-        )
-        return strands
-
-
-def define_edges(vertices_of_polygon, index_1, index_2, edge_type):
-    return Edge(vertices_of_polygon[index_1, :], vertices_of_polygon[index_2, :],)
-
+        # Initialise rest of self from parent class DNAEdge
+        super().__init__(Vertex(vertex_1), Vertex(vertex_2))
 
 class BoundaryPolygon:
     """
-    A Polygon is a cyclic combination of 3 or more edges
+    A BoundaryPolygon is a cyclic combination of 3 or more edges, which
+    result in a closed Polygon
 
     The first vertex on the starting edge = the last vertex on the final edge
     """
@@ -171,7 +124,7 @@ class BoundaryPolygon:
             f.write(output_string)
 
     def plot2D(
-        self, ax: plt.Axes = None, fout: str = None, show: bool = True, **kwargs
+        self, ax: plt.Axes = None, fout: str = None, **kwargs
     ):
         """
         Assumes that the shape is 2D and lies on the z=0 plane.
@@ -179,47 +132,15 @@ class BoundaryPolygon:
         """
         if not ax:
             fig, ax = plt.subplots()
-        ax.plot(self.x, self.y, "k-", **kwargs)
+        ax.plot(list(self.x) + [self.x[0]], list(self.y) + [self.y[0]], "k-", **kwargs)
         ax.set_aspect("equal", "datalim")
         if fout:
             fig.savefig(fout)
-        if show:
+        if not ax:
             fig.show()
 
+    def lattice(self, **lattice_kwargs) -> Lattice:
+        return Lattice(self.vertices, **lattice_kwargs)
 
-# ---plot---#
-def plot_the_vertices(vertices: np.ndarray):
-    fig = plt.figure()
-    nodes = vertices
-    triangulation = tri.Triangulation(nodes[:, 0], nodes[:, 1])
-    # hello = triangulation.get_masked_triangles()
-    plt.triplot(triangulation, "-k")
-    plt.axes().set_aspect("equal", "datalim")
-    fig.show()
-
-    fig2 = plt.figure()
-    new_nodes_x = np.append(nodes[:, 0], nodes[0, 0])
-    new_nodes_y = np.append(nodes[:, 1], nodes[0, 1])
-    print(new_nodes_x, new_nodes_y)
-    plt.plot(new_nodes_x, new_nodes_y)
-    plt.axes().set_aspect("equal", "datalim")
-    fig2.show()
-
-
-# ---run the script---#
-def make_polygon(polygon_vertices: np.ndarray, SHAPE=None):
-
-    plot_the_vertices(polygon_vertices)
-
-    i = 1
-    if not SHAPE == None:
-        # Current Functionalities
-        print(f"This shape has {SHAPE.edges.__len__()} edges \n")
-        print(
-            f"The coordinates of edge number {i+1} are: {str(SHAPE.edges[i].vertices[0])} and {str(SHAPE.edges[i].vertices[1])} \n"
-        )
-        print(f"It has a size of {round(SHAPE.edges[i].length,4)}\n")
-        print(f"This edge is a type of {SHAPE.edges[i].kind} edge \n")
-        print(f"It's vector is {SHAPE.edges[i].vector}\n")
-        print(f"It's unit vector is {SHAPE.edges[i].unit_vector}")
-    return
+    def dna_snake(self, **lattice_kwargs) -> Lattice:
+        return DNASnake(polygon_vertices = self.vertices, **lattice_kwargs)

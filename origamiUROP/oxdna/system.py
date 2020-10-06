@@ -155,7 +155,7 @@ class System:
     def topology(self) -> pd.DataFrame:
         return self.dataframe[TOPOLOGY_COLUMNS]
 
-    def write_oxDNA(self, prefix: str = "out"):
+    def write_oxDNA(self, prefix: str = "out", root : str = '.'):
         """
         Writes two files oxdna.*.conf and oxdna.*.top for the
         configuration file and topology file required
@@ -164,17 +164,17 @@ class System:
         Parameters:
             prefix ('out') : prefix to output files
         """
-        with open(f"oxdna.{prefix}.conf", "w") as f:
+        with open(f"{root}/oxdna.{prefix}.conf", "w") as f:
             f.write(f"t = {self.time}\n")
             f.write(f"b = {self.box[0]} {self.box[1]} {self.box[2]}\n")
             f.write(f"E = {self.E_pot} {self.E_kin} {self.E_tot}\n")
             f.write(oxDNA_string(self.configuration))
 
-        with open(f"oxnda.{prefix}.top", "w") as f:
+        with open(f"{root}/oxdna.{prefix}.top", "w") as f:
             f.write(f"{len(self.nucleotides)} {len(self.strands)}\n")
             f.write(oxDNA_string(self.topology))
 
-    def write_LAMMPS(self, prefix : str = 'out'):
+    def write_LAMMPS(self, prefix : str = 'out', root : str = '.'):
         """
         Writes lammps.*.conf which is a configuration data
         file needed to run a lammps simulation.
@@ -183,7 +183,7 @@ class System:
             prefix ('out') : prefix to output file
         """
 
-        with open(f"lammps.{prefix}.conf", "w") as f:
+        with open(f"{root}/lammps.{prefix}.conf", "w") as f:
             f.write(f"# LAMMPS data file\n")
             f.write(f'{len(self.nucleotides)} atoms\n')
             f.write(f'{len(self.nucleotides)} ellipsoids\n')
