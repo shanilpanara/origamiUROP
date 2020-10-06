@@ -14,7 +14,7 @@ class Reader:
         'a3x' , 'a3y' , 'a3z',
         'vx'  , 'vy'  , 'vz' ,
         'Lx'  , 'Ly'  , 'Lz' ,
-        'before', 'after',
+        'before', 'after', 'strand',
     ]
 
     """
@@ -27,27 +27,14 @@ class Reader:
     def __init__(
         self, 
         nucleotides: pd.DataFrame, 
-        metadata: dict = None,
+        metadata: dict,
     ):
-        try:
-            assert isinstance(self.dataframe, pd.DataFrame)
-        except:
-            raise TypeError(
-                'Reader: There is a problem accessing the '
-                'self.dataframe property - check that it exists for and it '
-                f'is a pd.DataFrame, currently it is a {self.dataframe.__class__}'
-            )
 
-        try:
-            self.metadata
-        except:
-            raise TypeError(
-                'Reader: There is a problem accessing the '
-                'self.metadata property - check that it exists'
-            )
+        Reader._check_dataframe(nucleotides)
+        Reader._check_metadata(metadata)
 
-        Reader._check_dataframe(self.dataframe)
-        Reader._check_metadata(self.metadata)
+        self._nucleotides = nucleotides
+        self._metadata = metadata
         
         self._validate_strands()
 
@@ -64,7 +51,7 @@ class Reader:
     def _validate_strands(self):
         assert True
 
-    def _nucleotide_from_series(series: pd.Series) -> Nucleotide:
+    def _nucleotide_from_series(self, series: pd.Series) -> Nucleotide:
         nuc = Nucleotide(
             series['base'],
             np.array([series['x'], series['y'], series['z']]),
@@ -111,7 +98,7 @@ class Reader:
 
 class LAMMPSDataReader(Reader):
     def __init__(self, fname: str):
-        super().__init__()
+        super().__init__(self.dataframe, metadata=self.metadata)
 
     @property
     def dataframe(self) -> pd.DataFrame:
