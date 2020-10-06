@@ -6,10 +6,9 @@ import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
-from .oxdna.strand import Strand, generate_helix
-from .oxdna import Nucleotide, System
+from .oxdna import Nucleotide, System, Strand, generate_helix
 from .tools import DNAEdge, DNANode
-from .lattice import Lattice
+from .lattice import Lattice, DNASnake
 
 EDGE_TYPE = {0: "boundary", 1: "scaffold", 2: "staple"}
 
@@ -142,3 +141,6 @@ class BoundaryPolygon:
 
     def lattice(self, **lattice_kwargs) -> Lattice:
         return Lattice(self.vertices, **lattice_kwargs)
+
+    def dna_snake(self, **lattice_kwargs) -> Lattice:
+        return DNASnake(polygon_vertices = self.vertices, **lattice_kwargs)

@@ -51,6 +51,7 @@ def get_across(nuc : Nucleotide) -> Nucleotide:
     return Nucleotide(ACROSS[nuc._base], pos_com, a1, a3)
 
 def main(number : int = 10, double : bool = False):
+    # Add Strand 1 - ssDNA
     n = number
     nucleotides = []
     print("Creating a nucleotide:")
@@ -70,6 +71,7 @@ def main(number : int = 10, double : bool = False):
     print(f"Strand: {strand}")
     system = System(np.array([20., 20., 20.]))
     system.add_strand(strand)
+    # Add Strand 2 - complementary ssDNA -> dsDNA
     if double:
         nucleotides = []
         for nucleotide in strand.nucleotides[::-1]:

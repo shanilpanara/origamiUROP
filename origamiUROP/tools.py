@@ -137,6 +137,7 @@ class DNAEdge:
             vertex_1 = DNANode(vertex_1)
         if not isinstance(vertex_2, DNANode):
             vertex_2 = DNANode(vertex_2)
+        assert vertex_1 is not vertex_2
         self.vertices = (vertex_1, vertex_2)
         self.vertices[0].vector_5p = self.vector
         self.vertices[0].a3_5p = self.unit_vector
