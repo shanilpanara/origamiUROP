@@ -8,13 +8,12 @@ from .oxdna import Nucleotide, Strand, System
 class Reader:
 
     columns = [
-        'base',
         'x'   , 'y'   , 'z'  ,
         'a1x' , 'a1y' , 'a1z',
         'a3x' , 'a3y' , 'a3z',
         'vx'  , 'vy'  , 'vz' ,
         'Lx'  , 'Ly'  , 'Lz' ,
-        'before', 'after', 'strand',
+        'base', 'before', 'after', 'strand',
     ]
 
     """
@@ -56,7 +55,7 @@ class Reader:
             series['base'],
             np.array([series['x'], series['y'], series['z']]),
             np.array([series['a1x'], series['a1y'], series['a1z']]),
-            np.array([series['a3x'], series['a3y'], series['a1z']]),
+            np.array([series['a3x'], series['a3y'], series['a3z']]),
             v=np.array([series['vx'], series['vy'], series['vz']]),
             L=np.array([series['Lx'], series['Ly'], series['Lz']]),
         )
@@ -69,10 +68,15 @@ class Reader:
         strand_list = []
         strand_counter = True
         i = 0
+
+        # strand_counter will be set to False
+        # when an empty strand is found
         while strand_counter:
             i += 1
             temp = self._nucleotides[self._nucleotides['strand']==i]
             strand_counter = temp.any().any()
+
+            # Force break if strand_counter==False
             if not strand_counter:
                 break
             nucleotide_list = []
@@ -83,7 +87,6 @@ class Reader:
             # TODO: sort nucleotide_list to ensure 
             # before and after are correct
             strand_list.append(Strand(nucleotides=nucleotide_list))
-        print(f"Strand List:\n{strand_list}")
         return strand_list
     
     @property
@@ -135,8 +138,9 @@ class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):
         conf, top = OXDNAReader.detect_filetypes(fnames)
         self._metadata = {}
-        self._configuration = self.read_configuration()
-        self._topology = self.read_topology()
+        self._topology = self.read_topology(top)
+        self._configuration = self.read_configuration(conf)
+
         super().__init__(self.dataframe, metadata=self.metadata)
 
     @staticmethod
@@ -146,17 +150,41 @@ class OXDNAReader(Reader):
         return conf, top
 
     def read_configuration(self, fname: str) -> pd.DataFrame:
-        return
+        with open(fname, 'r') as f:
+            self._metadata['time'] = f.readline().split('=')[-1].strip()
+            self._metadata['box'] = np.array(f.readline().split('=')[-1].strip().split())
+            _energies = f.readline().split('=')[-1].strip().split()
+            self._metadata['PE'] = float(_energies[0])
+            self._metadata['KE'] = float(_energies[1])
+            data = pd.read_csv(
+                f,
+                delim_whitespace=True,
+                header=None,
+                nrows=self._metadata['n_nucleotides'],
+            )
+            data = data.rename(columns=dict(zip(range(len(Reader.columns)), Reader.columns)))
+            
+        return data
 
     def read_topology(self, fname: str) -> pd.DataFrame:
-        return
+        with open(fname, 'r') as f:
+            n_nucleotides, n_strands = [int(i) for i in f.readline().split()]
+            self._metadata['n_nucleotides'] = n_nucleotides
+            self._metadata['n_strands'] = n_strands
+            data = pd.read_csv(fname, delim_whitespace=True, header=None, skiprows=1)
+            data = data.rename(columns={
+                0: 'strand',
+                1: 'base',
+                2: 'before',
+                3: 'after',
+            })
+        return data
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        result = pd.DataFrame()
+        result = pd.concat([self._configuration, self._topology], axis=1)
         return result
 
     @property
     def metadata(self) -> dict:
-        result = {}
-        return result
+        return self._metadata

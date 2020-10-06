@@ -33,12 +33,12 @@ def test_Reader():
     metadata = {
         'box': np.array([50., 50., 50.])
     }
-    print(f'Table:\n{table}')
     reader = Reader(table, metadata)
     system = reader.system
-    print(system.dataframe)
 
 def test_OXDNAReader():
+    reader = OXDNAReader([f'{ROOT}/oxdna.test.conf', f'{ROOT}/oxdna.test.top'])
+    reader.system.dataframe
     return
 
 def test_LAMMPSDataReader():
