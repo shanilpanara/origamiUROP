@@ -48,7 +48,7 @@ def test_Strand():
 
     assert strand.sequence == "AAAAAA"
     assert len(strand.nucleotides) == 6
-    assert len(strand.dataframe.columns.values) == 9
+    assert len(strand.dataframe.columns.values) == 10
 
     strand.sequence = "cccaaa"
     strand_1 = strand.copy()
@@ -57,7 +57,7 @@ def test_Strand():
     assert strand.sequence == "CCCAAA"
     assert strand_1.sequence == "TTTGGG"
     assert len(strand_1.nucleotides) == 6
-    assert len(strand_1.dataframe.columns.values) == 9
+    assert len(strand_1.dataframe.columns.values) == 10
 
     print("Basic Strand: \n", strand)
     # print(strand.dataframe)
@@ -71,7 +71,7 @@ def test_generate_helix_ss():
     assert len(ssDNA_helix) == 1
     assert len(ssDNA_helix[0]) == 40
     assert len(ssDNA_helix[0].nucleotides) == 40
-    assert len(ssDNA_helix[0].dataframe.columns.values) == 9
+    assert len(ssDNA_helix[0].dataframe.columns.values) == 10
 
     assert ssDNA_helix[0].index != 0  # required for .top oxDNA file
     assert ssDNA_helix[0].index == 1  # put here for explanatory purposes

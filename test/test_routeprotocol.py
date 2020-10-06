@@ -4,6 +4,9 @@ from origamiUROP.polygons import BoundaryPolygon
 
 import numpy as np
 import matplotlib.pyplot as plt
+from os import path
+
+ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
 DIST_SQUARE = 2.60
 
@@ -24,7 +27,7 @@ def test_square():
     route = square_route()
     system = System(np.array([50.0, 50.0, 50.0]))
     system.add_strand(route)
-    system.write_oxDNA()
+    system.write_oxDNA(root=ROOT)
 
 if __name__ == "__main__":
     polygon = square()
