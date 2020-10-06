@@ -140,3 +140,6 @@ lammps.*.conf
 # config files for testing
 !oxdna.test.conf
 !oxdna.test.top
+
+# Ignore Mac DS_Store files
+.DS_Store
