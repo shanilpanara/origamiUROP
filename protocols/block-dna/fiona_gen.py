@@ -8,18 +8,20 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from origamiUROP.oxdna import System, Strand, Nucleotide
+from origamiUROP.oxdna import Strand, Nucleotide
+from system import SystemWithFolder
 from origamiUROP.oxdna.strand import generate_helix, FENE_EPS
 
 def generate_system(
         n : int,
         double_strand_length : int,
         single_strand_length : int
-    ) -> System:
+    ) -> SystemWithFolder:
     """
     Generates an oxDNA system containing a single piece of DNA
     which has blocks of equal size of double-stranded portions
     and single-stranded portions.
+    
 
     Parameters:
         n - number of nucleotides e.g. 100
@@ -31,7 +33,7 @@ def generate_system(
     # initialise system to comply with minimum image convention
     box = 2. * n * FENE_EPS
     print(f'Creating simulation system with box size: {box}')
-    system = System(np.array([box, box, box]))
+    system = SystemWithFolder(np.array([box, box, box]))
 
     # create a list of strands, our main strand which we will use
     # and our complementary strand

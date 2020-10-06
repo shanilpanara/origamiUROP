@@ -7,6 +7,9 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import pathlib
+import os
+
 from origamiUROP.oxdna import Strand, Nucleotide
 
 CONFIGURATION_COLUMNS = ["position", "a1", "a3", "v", "L"]
