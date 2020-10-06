@@ -37,14 +37,22 @@ def test_Reader():
     system = reader.system
 
 def test_OXDNAReader():
-    reader = OXDNAReader([f'{ROOT}/oxdna.test.conf', f'{ROOT}/oxdna.test.top'])
+    reader = OXDNAReader([
+        f'{ROOT}/oxdna.test.conf', 
+        f'{ROOT}/oxdna.test.top'
+    ])
     reader.system.dataframe
     return
 
 def test_LAMMPSDataReader():
+    reader = LAMMPSDataReader(f'{ROOT}/lammps.test.conf')
     return
 
 def test_LAMMPSDumpReader():
+    reader = LAMMPSDataReader([
+        f'{ROOT}/lammps.test.conf', 
+        f'{ROOT}/lammps.test.dump'
+    ])
     return
 
 if __name__ == "__main__":
