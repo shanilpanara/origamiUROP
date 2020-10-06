@@ -11,7 +11,7 @@ def test_Nucleotide():
         np.array([0.0, 0.0, 1.0]),
     )
 
-    assert len(nucleotide.series) == 9
+    assert len(nucleotide.series) == 10
     assert (nucleotide.pos_back == [0.6, 0.0, 0.0]).all()
     assert (nucleotide.pos_back_rel == [-0.4, 0.0, 0.0]).all()
     assert (nucleotide.pos_base == [1.4, 0.0, 0.0]).all()

@@ -90,7 +90,7 @@ def test_System():
     assert isinstance(system, System)
 
     assert system.E_tot == 0.0
-    assert len(system.dataframe.count()) == 9
+    assert len(system.dataframe.count()) == 10
     assert len(system.configuration.count()) == 5
     assert len(system.topology.count()) == 4
 

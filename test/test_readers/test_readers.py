@@ -19,6 +19,10 @@ def test_oxDNA_reader():
     assert filecmp.cmp(top_input, top_out), "topology files don't match"
     assert filecmp.cmp(conf_input, conf_out), "conf files don't match"
 
+def test_LAMMPS_reader():
+    return
+
 
 if __name__ == "__main__":
     test_oxDNA_reader()
+    test_LAMMPS_reader()
