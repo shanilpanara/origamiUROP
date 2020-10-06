@@ -26,15 +26,17 @@ def test_Reader():
         'Lx': [0.0, 0.0, 0.0, 0.0],
         'Ly': [0.0, 0.0, 0.0, 0.0],
         'Lz': [0.0, 0.0, 0.0, 0.0],
-        'before': [-1, 0, 1, 2],
-        'after': [1, 2, 3, -1],
+        'before': [-1, 0, -1, 2],
+        'after': [1, -1, 3, -1],
         'strand': [1, 1, 2, 2],
     })
     metadata = {
         'box': np.array([50., 50., 50.])
     }
+    print(f'Table:\n{table}')
     reader = Reader(table, metadata)
     system = reader.system
+    print(system.dataframe)
 
 def test_OXDNAReader():
     return

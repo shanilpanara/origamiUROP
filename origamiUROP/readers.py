@@ -83,6 +83,7 @@ class Reader:
             # TODO: sort nucleotide_list to ensure 
             # before and after are correct
             strand_list.append(Strand(nucleotides=nucleotide_list))
+        print(f"Strand List:\n{strand_list}")
         return strand_list
     
     @property
@@ -93,7 +94,8 @@ class Reader:
             E_pot=self._metadata.get('PE', 0.0),
             E_kin=self._metadata.get('KE', 0.0)
         )
-        _system.add_strands(self.strands)
+        # reverse list is necessary but cannot remember why
+        _system.add_strands(self.strands[::-1])
         return _system
 
 class LAMMPSDataReader(Reader):
@@ -132,6 +134,9 @@ class LAMMPSDumpReader(Reader):
 class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):
         conf, top = OXDNAReader.detect_filetypes(fnames)
+        self._metadata = {}
+        self._configuration = self.read_configuration()
+        self._topology = self.read_topology()
         super().__init__(self.dataframe, metadata=self.metadata)
 
     @staticmethod

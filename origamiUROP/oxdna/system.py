@@ -148,7 +148,7 @@ class System:
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        return pd.concat([i.dataframe for i in self.strands])
+        return pd.concat([i.dataframe for i in self.strands]).reset_index(drop=True)
 
     @property
     def configuration(self) -> pd.DataFrame:
@@ -265,28 +265,3 @@ class System:
             raise TypeError(
                 "add_strands() requires ONE of a list or dictionary of strands"
             )
-
-
-def read_LAMMPS_dump(fname: str) -> System:
-    """
-    Reads a LAMMPS dump file that has been simulated
-    with the oxDNA(2) force field.
-
-    Parameters:
-        fname - filename
-    """
-    system = System()
-    return system
-
-
-def read_LAMMPS_data(fname: str) -> System:
-    """
-    Reads a LAMMPS configuration data file that can
-    be simulated with the oxDNA(2) force field.
-
-    Parameters:
-        fname - filename
-    """
-    system = System()
-    # put code here
-    return system
