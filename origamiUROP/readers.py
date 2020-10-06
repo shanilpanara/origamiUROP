@@ -6,14 +6,15 @@ import pandas as pd
 from oxdna import Nucleotide, Strand, System
 
 class Reader:
-
+    
     columns = [
         'base',
         'x'   , 'y'   , 'z'  ,
         'a1x' , 'a1y' , 'a1z',
         'a3x' , 'a3y' , 'a3z',
         'vx'  , 'vy'  , 'vz' ,
-        'Lx'  , 'Ly'  , 'Lz' 
+        'Lx'  , 'Ly'  , 'Lz' ,
+        'before', 'after',
     ]
 
     """
@@ -50,7 +51,7 @@ class Reader:
         assert True
 
     def _nucleotide_from_series(series: pd.Series) -> Nucleotide:
-        return Nucleotide(
+        nuc = Nucleotide(
             series['base'],
             np.array([series['x'], series['y'], series['z']]),
             np.array([series['a1x'], series['a1y'], series['a1z']]),
@@ -58,14 +59,29 @@ class Reader:
             v=np.array([series['vx'], series['vy'], series['vz']]),
             L=np.array([series['Lx'], series['Ly'], series['Lz']]),
         )
+        nuc._before = series['before']
+        nuc._after = series['after']
+        return nuc
 
     @property
     def strands(self) -> List[Strand]:
-        strand_dict = {}
-        for i in self._nucleotides.index:
-            row = self._nucleotides[i]
-            nucleotide = self._nucleotide_from_series()
-        strand_list = strand_dict.values()
+        strand_list = []
+        strand_counter = True
+        i = 0
+        while strand_counter:
+            i += 1
+            temp = self._nucleotides[self._nucleotides['strand']==i]
+            strand_counter = temp.any().any()
+            if not strand_counter:
+                break
+            nucleotide_list = []
+            for index in temp.index:
+                nucleotide_list.append(
+                    self._nucleotide_from_series(temp.loc[index])
+                )
+            # TODO: sort nucleotide_list to ensure 
+            # before and after are correct
+            strand_list.append(Strand(nucleotides=nucleotide_list))
         return strand_list
     
     @property
@@ -89,4 +105,26 @@ class LAMMPSDataReader(Reader):
 
 class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):
-        pass
+        conf, top = OXDNAReader.detect_filetypes(fnames)
+        super().__init__(self.dataframe, metadata=self.metadata)
+
+    def detect_filetypes(fnames: List[str]):
+        conf = fnames[0]
+        top = fnames[1]
+        return conf, top
+
+    def read_configuration(self, fname: str) -> pd.DataFrame:
+        return
+
+    def read_topology(self, fname: str) -> pd.DataFrame:
+        return
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        result = pd.DataFrame()
+        return result
+
+    @property
+    def metadata(self) -> dict:
+        result = {}
+        return result
