@@ -147,16 +147,16 @@ class DNAEdge:
 
     def strand(self, sequence: str = None, **kwargs) -> List[Strand]:
 
-        # if not sequence:
-        #     # in future version, this will not be so straightforward
-        no_of_nucleotides_in_edge = self.nt_length
-        # else:
-        #     no_of_nucleotides_in_edge = len(sequence)
-        #     if len(sequence) >= self.nt_length:
-        #         print(
-        #             f"FYI: The Length of `sequence` is longer than the max no. of nucleotides "
-        #             f"that can be contained within this edge, i.e. {self.nt_length} nucleotides"
-        #         )
+        if not sequence:
+            # in future version, this will not be so straightforward
+            no_of_nucleotides_in_edge = self.nt_length
+        else:
+            no_of_nucleotides_in_edge = len(sequence)
+            if len(sequence) >= self.nt_length:
+                print(
+                    f"FYI: The Length of `sequence` is longer than the max no. of nucleotides "
+                    f"that can be contained within this edge, i.e. {self.nt_length} nucleotides"
+                )
 
         if self.vertices[0].a1_5p:
             a1 = self.vertices[0].a1_5p
@@ -212,18 +212,13 @@ class DNAEdge:
 
     @property
     def length(self):
-        """The length of the edge in oxdna units"""
+        """The length of the edge in oxdna units (i think)"""
         return np.linalg.norm(self.vector)
 
-    # @property
-    # def nt_length(self):
-    #     """The length of the edge in units of nucleotides"""
-    #     return int(self.length * 2.45)
-    
     @property
     def nt_length(self):
-        """Only true when using lattice.route.system"""
-        return int(self.length)
+        """The length of the edge in units of nucleotides"""
+        return int(self.length * 2.45)
 
     @property
     def vector(self) -> np.ndarray:

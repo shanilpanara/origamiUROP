@@ -8,7 +8,6 @@ from os import path
 
 ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
 
-
 def generate(polygon_vertices: np.ndarray, DNAout: str = None, PLOTout: str = None):
     polygon = BoundaryPolygon(polygon_vertices)
     lattice = polygon.dna_snake(straightening_factor=5, start_side="left")
@@ -55,4 +54,3 @@ if __name__ == "__main__":
     generate(octagon*12, DNAout="oct", PLOTout="oct")
     generate(triangle*2, DNAout="triangle",PLOTout="triangle")
     generate(my_polygon*2, PLOTout="my_poly")
-

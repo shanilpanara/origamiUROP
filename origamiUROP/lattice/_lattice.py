@@ -1,7 +1,8 @@
 from typing import List
 
 import numpy as np
-from shapely.geometry import MultiPoint, Polygon
+from shapely.geometry import MultiPoint
+from shapely import geometry
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
@@ -12,16 +13,17 @@ import itertools
 
 from .node import LatticeNode
 from .route import LatticeRoute
+
 from ..oxdna.strand import POS_STACK, FENE_LENGTH
 from .utils import find_closest, find_crossover_locations
 from ..oxdna.utils import round_to_multiple
 
 from bisect import bisect_left, bisect_right
 
-
 def modify_lattice_row(grid: np.ndarray,
                        difference: np.ndarray or List,
                        change_side: str = "yes"):
+  
     """
     Modifies the lattice sites for a given row in the `grid` by 
     adding or removing the number of sites equal to the value which 
@@ -146,7 +148,7 @@ class Lattice:
             
         """
         self.polygon_array = polygon_vertices.astype(dtype=np.float64)
-        self.polygon = Polygon(polygon_vertices)
+        self.polygon = geometry.Polygon(polygon_vertices)
         self.grid_size = grid_size
         self.x_spacing = grid_size[0]
         self.y_spacing = grid_size[1]
@@ -519,7 +521,6 @@ class Lattice:
         if np.shape(nodes)[1] not in [2,3]: # if array
             nodes = self.array_to_coords(nodes)
         
-
         x_min = polygon[:, 0].min()
         y_min = polygon[:, 1].min()
 

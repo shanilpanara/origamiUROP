@@ -71,7 +71,6 @@ def main(number : int = 10, double : bool = False):
     print(f"Strand: {strand}")
     system = System(np.array([20., 20., 20.]))
     system.add_strand(strand)
-
     # Add Strand 2 - complementary ssDNA -> dsDNA
     if double:
         nucleotides = []

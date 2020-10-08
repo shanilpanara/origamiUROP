@@ -131,11 +131,24 @@ dmypy.json
 ### VisualStudioCode ###
 .vscode/*
 
-# config files not for testing
+# Generate files
 oxdna.*.conf
 oxdna.*.top
 lammps.*.conf
+lammps.*.dump
+cando.*.conf
 *.cndo
+*.lammpstrj
+*.dat
+*.ply
+*.stl
+
+
+# Test Files
+!oxdna.test.conf
+!oxdna.test.top
+!lammps.test.conf
+!lammps.test.*.dump
 
 # Ignore Mac DS_Store files
 .DS_Store
