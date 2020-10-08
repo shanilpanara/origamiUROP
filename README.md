@@ -1,7 +1,7 @@
 
-# `origamiUROP`
-(updated required detailing features with new release)
+# `origamiUROP` 
 
+[![Build Status](https://travis-ci.com/shanilpanara/origamiUROP.svg?branch=master)](https://travis-ci.com/shanilpanara/origamiUROP)
 
 **Autonomous generation of DNA Origami nanostructures** 
 `origamiUROP` is a Python Library which can currently be used for generating a system comprised of ssDNA/dsDNA strands. Using a set of vertices, lines (edges) are generated which act as centrelines for single/double strands of DNA. It is modelled using the oxDNA model and can be exported in this format (`.conf` and `.top` files).
