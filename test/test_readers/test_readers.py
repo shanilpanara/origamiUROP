@@ -52,8 +52,10 @@ def test_LAMMPSDataReader():
 def test_LAMMPSDumpReader():
     reader = LAMMPSDumpReader([
         f'{ROOT}/lammps.test.conf', 
-        f'{ROOT}/lammps.test.dump'
+        f'{ROOT}/lammps.test.1000.dump'
     ])
+    reader.system.dataframe
+    reader.update_dump(f'{ROOT}/lammps.test.2000.dump')
     reader.system.dataframe
     return
 

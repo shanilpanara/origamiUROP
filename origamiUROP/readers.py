@@ -10,12 +10,19 @@ from .oxdna import Nucleotide, Strand, System
 from .oxdna.utils import quat_to_exyz
 
 def quat_to_matrix(row: pd.Series) -> np.ndarray:
+    """
+    Converts a pd.Series which has entries:
+        [['qw', 'qi', 'qj', 'qk']]
+
+    from a quaternion to a matrix rotation and returns
+    it as a np.ndarray.
+    """
 
     quaternion = np.array([
         row['qw'],
-        row['qx'],
-        row['qy'],
-        row['qz']
+        row['qi'],
+        row['qj'],
+        row['qk']
     ])
 
     rotation = scipy.spatial.transform.Rotation(quaternion)
@@ -129,8 +136,18 @@ class LAMMPSDataReader(Reader):
     def detect_filetypes(fname: str):
         raise NotImplementedError
 
-    @property
-    def dataframe(self) -> pd.DataFrame:
+    def convert_quaternions(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        dataframe['matrix'] = dataframe.apply(
+            lambda x: quat_to_matrix(x), 
+            axis=1
+        )
+        for i in range(3):
+            for j, comp in enumerate(['x', 'y', 'z']):
+                dataframe[f'a{i+1}{comp}'] = \
+                    dataframe['matrix'].apply(lambda x: x[i][j])
+        
+
+    def _get_dataframe(self) -> pd.DataFrame:
         meta = self.metadata
         skip_atoms = meta['skip_atoms']
         skip_velocities = meta['skip_velocities']
@@ -190,14 +207,12 @@ class LAMMPSDataReader(Reader):
             2: 'Iy',
             3: 'Iz',
             4: 'qw',
-            5: 'qx',
-            6: 'qy',
-            7: 'qz',
+            5: 'qi',
+            6: 'qj',
+            7: 'qk',
         })
-        ellipsoids['matrix'] = ellipsoids.apply(lambda x: quat_to_matrix(x), axis=1)
-        for i in range(3):
-            for j, comp in enumerate(['x', 'y', 'z']):
-                ellipsoids[f'a{i+1}{comp}'] = ellipsoids['matrix'].apply(lambda x: x[i][j])
+        self.convert_quaternions(ellipsoids)
+
         result = pd.merge(result, ellipsoids, on='id')
         bonds = pd.read_csv(
             self._fname, 
@@ -220,8 +235,12 @@ class LAMMPSDataReader(Reader):
 
         result['before'] = result['before'].apply(lambda x: -1 if np.isnan(x) else x)
         result['after'] = result['after'].apply(lambda x: -1 if np.isnan(x) else x)
-        
-        return result[Reader.columns]
+
+        return result
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        return self._get_dataframe()[Reader.columns]
 
     @property
     def metadata(self) -> dict:
@@ -274,18 +293,10 @@ class LAMMPSDumpReader(LAMMPSDataReader):
     dump file.
     """
     def __init__(self, fnames: List[str]):
-        data, dump = LAMMPSDumpReader.detect_filetypes(fnames)
+        data, self._dump = LAMMPSDumpReader.detect_filetypes(fnames)
         LAMMPSDataReader.__init__(self, data)
-        self._dump = dump
-        Reader.__init__(self, self.dataframe, metadata=self.metadata)
-
-    @property
-    def dump(self) -> str:
-        return self._dump
-
-    @dump.setter
-    def dump(self, fname: str):
-        self._dump = dump
+        
+        self._time = 0
         Reader.__init__(self, self.dataframe, metadata=self.metadata)
 
     @staticmethod
@@ -295,8 +306,58 @@ class LAMMPSDumpReader(LAMMPSDataReader):
         return data, dump
 
     @property
-    def _dataframe(self):
+    def dump(self) -> str:
+        return self._dump
+
+    def update_dump(self, fname: str):
+        self._dump = fname
+        Reader.__init__(self, self.dataframe, metadata=self.metadata)
+
+    def _get_dumpframe(self):
+        fname = self.dump
+        with open(fname, 'r') as f:
+            lines = f.readlines()
+        for i, line in enumerate(lines):
+            if re.findall(r"TIMESTEP", line):
+                self._time = int(lines[i+1])
+            if re.findall(r"ATOMS", line):
+                skip_atoms = i+1
+                columns = line.split()[2:]
+
+        dump = pd.read_csv(
+            fname, 
+            skiprows=skip_atoms, 
+            nrows=self.metadata['n_atoms'],
+            header=None,
+            names=columns,
+            delim_whitespace=True,
+        ).rename(columns={
+            'c_quat[1]': 'qw',
+            'c_quat[2]': 'qi',
+            'c_quat[3]': 'qj',
+            'c_quat[4]': 'qk',
+            'tqx':'Lx',
+            'tqy':'Ly',
+            'tqz':'Lz',
+        })
+
+        self.convert_quaternions(dump) 
+
+        return dump
+
+    @property
+    def dataframe(self):
         result = pd.DataFrame()
+        dump = self._get_dumpframe()
+        data = self._get_dataframe()
+        dump = pd.merge(
+            dump,
+            data.reset_index().rename(
+                columns={'index':'id'}
+            )[['id', 'before', 'after', 'strand', 'base']],
+            on='id'
+        )
+        result = data[Reader.columns]
         return result
 
 class OXDNAReader(Reader):
