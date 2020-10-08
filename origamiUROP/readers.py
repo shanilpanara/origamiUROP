@@ -1,9 +1,28 @@
+import re
+
 from typing import List
 
 import numpy as np
 import pandas as pd
+import scipy.spatial.transform
 
 from .oxdna import Nucleotide, Strand, System
+from .oxdna.utils import quat_to_exyz
+
+def quat_to_matrix(row: pd.Series) -> np.ndarray:
+
+    quaternion = np.array([
+        row['qw'],
+        row['qx'],
+        row['qy'],
+        row['qz']
+    ])
+
+    rotation = scipy.spatial.transform.Rotation(quaternion)
+
+    matrix = rotation.as_matrix()
+
+    return matrix
 
 class Reader:
 
@@ -103,36 +122,154 @@ class Reader:
 
 class LAMMPSDataReader(Reader):
     def __init__(self, fname: str):
-        super().__init__(self.dataframe, metadata=self.metadata)
-
-    @property
-    def dataframe(self) -> pd.DataFrame:
-        result = pd.DataFrame()
-        return result
-
-    @property
-    def metadata(self) -> dict:
-        result = {}
-        return result
-
-class LAMMPSDumpReader(Reader):
-    def __init__(self, fnames: List[str]):
-        data, dump = LAMMPSDumpReader.detect_filetypes(fnames)
+        self._fname = fname
         super().__init__(self.dataframe, metadata=self.metadata)
 
     @staticmethod
-    def detect_filetypes(fnames: List[str]):
-        return data, dump
+    def detect_filetypes(fname: str):
+        raise NotImplementedError
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        result = pd.DataFrame()
-        return result
+        meta = self.metadata
+        skip_atoms = meta['skip_atoms']
+        skip_velocities = meta['skip_velocities']
+        skip_ellipsoids = meta['skip_ellipsoids']
+        skip_bonds = meta['skip_bonds']
+        n_atoms = meta['n_atoms']
+        n_bonds = meta['n_bonds']
+        # parse atoms
+        atoms = pd.read_csv(
+            self._fname, 
+            skiprows=skip_atoms,
+            delim_whitespace=True,
+            header=None,
+            nrows=n_atoms,
+        ).rename(columns={
+            0: 'id',
+            1: 'n_base',
+            2: 'x',
+            3: 'y',
+            4: 'z',
+            5: 'strand',
+            6: 'flag',
+            7: 'density'
+        })
+        atoms['base'] = atoms['n_base'].apply(lambda x: {
+                1:'A',
+                2:'C',
+                3:'G',
+                4:'T'
+            }[x]
+        )
+        velocities = pd.read_csv(
+            self._fname, 
+            skiprows=skip_velocities,
+            delim_whitespace=True,
+            header=None,
+            nrows = n_atoms,
+        ).rename(columns={
+            0: 'id',
+            1: 'vx',
+            2: 'vy',
+            3: 'vz',
+            4: 'Lx',
+            5: 'Ly',
+            6: 'Lz',
+        })
+        result = pd.merge(atoms, velocities, on='id')
+        ellipsoids = pd.read_csv(
+            self._fname, 
+            skiprows=skip_ellipsoids,
+            delim_whitespace=True,
+            header=None,
+            nrows = n_atoms,
+        ).rename(columns={
+            0: 'id',
+            1: 'Ix',
+            2: 'Iy',
+            3: 'Iz',
+            4: 'qw',
+            5: 'qx',
+            6: 'qy',
+            7: 'qz',
+        })
+        ellipsoids['matrix'] = ellipsoids.apply(lambda x: quat_to_matrix(x), axis=1)
+        for i in range(3):
+            for j, comp in enumerate(['x', 'y', 'z']):
+                ellipsoids[f'a{i+1}{comp}'] = ellipsoids['matrix'].apply(lambda x: x[i][j])
+        result = pd.merge(result, ellipsoids, on='id')
+        bonds = pd.read_csv(
+            self._fname, 
+            skiprows=skip_bonds,
+            delim_whitespace=True,
+            header=None,
+            nrows = n_bonds,
+        ).rename(columns={
+            0: 'id',
+            1: 'type',
+            2: 'atom1',
+            3: 'atom2',
+        })
+        result = result.set_index('id')
+        for index in bonds.index:
+            i = bonds['atom1'][index]
+            j = bonds['atom2'][index]
+            result.at[i, 'after'] = int(j)
+            result.at[j, 'before'] = int(i)
+
+        result['before'] = result['before'].apply(lambda x: -1 if np.isnan(x) else x)
+        result['after'] = result['after'].apply(lambda x: -1 if np.isnan(x) else x)
+        
+        return result[Reader.columns]
 
     @property
     def metadata(self) -> dict:
-        result = {}
+        box = np.array([0., 0., 0.])
+        with open(self._fname, 'r') as f:
+            for i, line in enumerate(f.readlines()):
+                if re.findall('Atoms', line):
+                    skip_atoms = i + 2
+                elif re.findall('Velocities', line):
+                    skip_velocities = i + 2
+                elif re.findall('Ellipsoids', line):
+                    skip_ellipsoids = i + 2
+                elif re.findall('Bonds', line):
+                    skip_bonds = i + 2
+                elif re.findall('xlo xhi', line):
+                    box[0] = float(line.split()[1]) - float(line.split()[0])
+                elif re.findall('ylo yhi', line):
+                    box[0] = float(line.split()[1]) - float(line.split()[0])
+                elif re.findall('zlo zhi', line):
+                    box[0] = float(line.split()[1]) - float(line.split()[0])
+                elif re.findall(r"[0-9]+ atoms", line):
+                    n_atoms = float(line.split()[0])
+                elif re.findall(r"[0-9]+ bonds", line):
+                    n_bonds = float(line.split()[0])
+
+        result = {
+            'skip_atoms': skip_atoms,
+            'skip_velocities': skip_velocities,
+            'skip_ellipsoids': skip_ellipsoids,
+            'skip_bonds': skip_bonds,
+            'n_atoms': n_atoms,
+            'n_bonds': n_bonds,
+            'box': box,
+        }
+
         return result
+
+class LAMMPSDumpReader(LAMMPSDataReader):
+    def __init__(self, fnames: List[str]):
+        data, dump = LAMMPSDumpReader.detect_filetypes(fnames)
+        LAMMPSDataReader.__init__(self, data)
+        Reader.__init__(self, self.dataframe, metadata=self.metadata)
+
+    @staticmethod
+    def detect_filetypes(fnames: List[str]):
+        data = fnames[0]
+        dump = fnames[1]
+        return data, dump
 
 class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):

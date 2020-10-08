@@ -6,7 +6,7 @@ import pandas as pd
 from origamiUROP.readers import Reader, OXDNAReader, LAMMPSDataReader, LAMMPSDumpReader
 from origamiUROP.oxdna import System
 
-ROOT = "/".join(path.abspath(__file__).split("/")[:-1])
+ROOT = "/".join(path.abspath(__file__).split("/")[:-1])                 
 
 def test_Reader():
     table = pd.DataFrame({
@@ -46,10 +46,11 @@ def test_OXDNAReader():
 
 def test_LAMMPSDataReader():
     reader = LAMMPSDataReader(f'{ROOT}/lammps.test.conf')
+    reader.system.dataframe
     return
 
 def test_LAMMPSDumpReader():
-    reader = LAMMPSDataReader([
+    reader = LAMMPSDumpReader([
         f'{ROOT}/lammps.test.conf', 
         f'{ROOT}/lammps.test.dump'
     ])

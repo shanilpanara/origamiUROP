@@ -53,3 +53,34 @@ def round_to_multiple(n, mo=0.34, decimal_places=2):
     b = a + mo  # Larger multiple
     closest_multiple = b if n - a > b - n else a  # Return of closest of two
     return round(closest_multiple, decimal_places)
+
+# the three commented lines would define quantities that are not necessary
+def quat_to_exyz (myquat):
+    sqw = myquat[0] * myquat[0];
+    sqx = myquat[1] * myquat[1];
+    sqy = myquat[2] * myquat[2];
+    sqz = myquat[3] * myquat[3];
+
+    invs = 1 / (sqx + sqy + sqz + sqw)
+    m00 = (sqx - sqy - sqz + sqw) * invs ;
+    #m11 = (-sqx + sqy - sqz + sqw) * invs ;
+    m22 = (-sqx - sqy + sqz + sqw) * invs ;
+    
+    tmp1 = myquat[1] * myquat[2];
+    tmp2 = myquat[3] * myquat[0];
+    m10 = 2.0 * (tmp1 + tmp2) * invs ;
+    #m01 = 2.0 * (tmp1 - tmp2) * invs ;
+
+    tmp1 = myquat[1] * myquat[3];
+    tmp2 = myquat[2] * myquat[0];
+    m20 = 2.0 * (tmp1 - tmp2) * invs ;
+    m02 = 2.0 * (tmp1 + tmp2) * invs ;
+    tmp1 = myquat[2] * myquat[3];
+    tmp2 = myquat[1] * myquat[0];
+    #m21 = 2.0 * (tmp1 + tmp2) * invs ;
+    m12 = 2.0 * (tmp1 - tmp2) * invs ; 
+
+    mya1 = np.array([m00, m10, m20])
+    mya3 = np.array([m02, m12, m22])
+
+    return mya1, mya3
