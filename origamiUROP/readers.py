@@ -260,9 +260,32 @@ class LAMMPSDataReader(Reader):
         return result
 
 class LAMMPSDumpReader(LAMMPSDataReader):
+    """
+    LAMMPS DumpFile reader designed specifically for LAMMPS simulations
+    that have used the oxDNA or oxDNA2 forcefields, and have data/dump
+    files configured as per the literature (i.e. not customised)
+
+    LAMMPSDumpReader subclasses LAMMPSDataReader and is also a subclass
+    of Reader, which LAMMPSDataReader also subclasses. This architecture
+    is slightly confusing but results in very concise code for this class
+
+    The reason for subclassing LAMMPSDataReader is because the configuration
+    data file is needed to generate the bonds, which cannot be stored in a 
+    dump file.
+    """
     def __init__(self, fnames: List[str]):
         data, dump = LAMMPSDumpReader.detect_filetypes(fnames)
         LAMMPSDataReader.__init__(self, data)
+        self._dump = dump
+        Reader.__init__(self, self.dataframe, metadata=self.metadata)
+
+    @property
+    def dump(self) -> str:
+        return self._dump
+
+    @dump.setter
+    def dump(self, fname: str):
+        self._dump = dump
         Reader.__init__(self, self.dataframe, metadata=self.metadata)
 
     @staticmethod
@@ -270,6 +293,11 @@ class LAMMPSDumpReader(LAMMPSDataReader):
         data = fnames[0]
         dump = fnames[1]
         return data, dump
+
+    @property
+    def _dataframe(self):
+        result = pd.DataFrame()
+        return result
 
 class OXDNAReader(Reader):
     def __init__(self, fnames: List[str]):

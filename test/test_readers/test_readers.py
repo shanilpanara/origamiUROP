@@ -54,6 +54,7 @@ def test_LAMMPSDumpReader():
         f'{ROOT}/lammps.test.conf', 
         f'{ROOT}/lammps.test.dump'
     ])
+    reader.system.dataframe
     return
 
 if __name__ == "__main__":

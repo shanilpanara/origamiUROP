@@ -135,6 +135,7 @@ dmypy.json
 oxdna.*.conf
 oxdna.*.top
 lammps.*.conf
+lammps.*.dump
 cando.*.conf
 *.cndo
 *.lammpstrj
@@ -146,6 +147,8 @@ cando.*.conf
 # Test Files
 !oxdna.test.conf
 !oxdna.test.top
+!lammps.test.conf
+!lammps.test.*.dump
 
 # Ignore Mac DS_Store files
 .DS_Store
