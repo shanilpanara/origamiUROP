@@ -147,7 +147,7 @@ class LAMMPSDataReader(Reader):
                     dataframe['matrix'].apply(lambda x: x[i][j])
         
 
-    def _get_dataframe(self) -> pd.DataFrame:
+    def read_data(self) -> pd.DataFrame:
         meta = self.metadata
         skip_atoms = meta['skip_atoms']
         skip_velocities = meta['skip_velocities']
@@ -240,7 +240,7 @@ class LAMMPSDataReader(Reader):
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        return self._get_dataframe()[Reader.columns]
+        return self.read_data()[Reader.columns]
 
     @property
     def metadata(self) -> dict:
@@ -313,7 +313,7 @@ class LAMMPSDumpReader(LAMMPSDataReader):
         self._dump = fname
         Reader.__init__(self, self.dataframe, metadata=self.metadata)
 
-    def _get_dumpframe(self):
+    def read_dump(self):
         fname = self.dump
         with open(fname, 'r') as f:
             lines = f.readlines()
@@ -348,8 +348,8 @@ class LAMMPSDumpReader(LAMMPSDataReader):
     @property
     def dataframe(self):
         result = pd.DataFrame()
-        dump = self._get_dumpframe()
-        data = self._get_dataframe()
+        data = self.read_data()
+        dump = self.read_dump()
         dump = pd.merge(
             dump,
             data.reset_index().rename(
@@ -357,7 +357,7 @@ class LAMMPSDumpReader(LAMMPSDataReader):
             )[['id', 'before', 'after', 'strand', 'base']],
             on='id'
         )
-        result = data[Reader.columns]
+        result = dump[Reader.columns]
         return result
 
 class OXDNAReader(Reader):
