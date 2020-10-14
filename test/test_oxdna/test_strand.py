@@ -48,7 +48,7 @@ def test_Strand():
 
     assert strand.sequence == "AAAAAA"
     assert len(strand.nucleotides) == 6
-    assert len(strand.dataframe.columns.values) == 9
+    assert len(strand.dataframe.columns.values) == 10
 
     strand.sequence = "cccaaa"
     strand_1 = strand.copy()
@@ -57,7 +57,7 @@ def test_Strand():
     assert strand.sequence == "CCCAAA"
     assert strand_1.sequence == "TTTGGG"
     assert len(strand_1.nucleotides) == 6
-    assert len(strand_1.dataframe.columns.values) == 9
+    assert len(strand_1.dataframe.columns.values) == 10
 
     print("Basic Strand: \n", strand)
     # print(strand.dataframe)
@@ -65,13 +65,13 @@ def test_Strand():
 
 
 def test_generate_helix_ss():
-    ssDNA_helix = generate_helix(40, double=False)
+    ssDNA_helix = generate_helix(n=40, double=False)
 
     assert type(ssDNA_helix) == list
     assert len(ssDNA_helix) == 1
     assert len(ssDNA_helix[0]) == 40
     assert len(ssDNA_helix[0].nucleotides) == 40
-    assert len(ssDNA_helix[0].dataframe.columns.values) == 9
+    assert len(ssDNA_helix[0].dataframe.columns.values) == 10
 
     assert ssDNA_helix[0].index != 0  # required for .top oxDNA file
     assert ssDNA_helix[0].index == 1  # put here for explanatory purposes
@@ -80,7 +80,7 @@ def test_generate_helix_ss():
 
 
 def test_generate_helix_ds():
-    dsDNA_helix = generate_helix(10, double=True, sequence="AGGGACGATG")
+    dsDNA_helix = generate_helix(n=10, double=True, sequence="AGGGACGATG")
 
     assert type(dsDNA_helix) == list
     assert len(dsDNA_helix) == 2
@@ -94,14 +94,14 @@ def test_generate_helix_ds():
 
 
 def test_generate_helix_seq():
-    ssDNA_with_short_seq = generate_helix(10, sequence="AAA")
+    ssDNA_with_short_seq = generate_helix(n=10, sequence="AAA")
     strand = ssDNA_with_short_seq[0]
 
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:3] == "AAA"
 
     long_seq = "AGAT" * 5
-    ssDNA_with_long_seq = generate_helix(10, sequence=long_seq)
+    ssDNA_with_long_seq = generate_helix(n=10, sequence=long_seq)
     strand = ssDNA_with_long_seq[0]
     assert len(strand.nucleotides) == 10
     assert strand.sequence[0:11] == long_seq[0:10]

@@ -5,11 +5,19 @@ import numpy as np
 import pandas as pd
 
 from typing import List
+import warnings
+
+from .utils import get_rotation_matrix
 
 # Emperical oxDNA constants
 POS_BACK = -0.4
 POS_STACK = 0.34
 POS_BASE = 0.4
+
+# Debesh's oxDNA constants
+SHIFT_BASE = 0.5
+SHIFT_ACROSS = 0.56 - (SHIFT_BASE * 0.9)
+SHIFT_ROUND = -0.105
 
 LMP_BASE = {
     'A' : 1,
@@ -20,6 +28,19 @@ LMP_BASE = {
 LMP_MASS = 3.1575
 LMP_INERTIA = 0.435179
 LMP_SHAPE = 1.1739845031423408
+
+ACROSS = {
+    'A' : 'T',
+    'C' : 'G',
+    'G' : 'C',
+    'T' : 'A',
+    'a' : 't',
+    't' : 'a',
+    'c' : 'g',
+    'g' : 'c'
+}
+
+BASE_BASE = 0.3897628551303122
 
 class Nucleotide:
     """
@@ -63,9 +84,10 @@ class Nucleotide:
         self._a3 = a3
         self._v = v
         self._L = L
+        self._across = None
 
         # make sure that the a1 and a3 vectors are orthogonal
-        assert np.dot(self._a1, self._a3) == 0.0
+        assert abs(round(np.dot(self._a1, self._a3))) == 0.0
 
         # these are accessed when the nucleotide is added
         # to an oxdna.Strand._nucleotides object
@@ -192,6 +214,94 @@ class Nucleotide:
                 "strand": self._strand_index,
                 "3p": self._before,
                 "5p": self._after,
+                "across": self.across,
             }
         )
+
+    @property
+    def across(self) -> int:
+        if self._across:
+            return self._across.index
+        else:
+            return -1
+
+    @across.setter
+    def across(self, nucleotide : "Nucleotide"):
+        if nucleotide == None:
+            self._across = None
+            return
+
+        if not isinstance(nucleotide, type(self)):
+            raise TypeError(f"Set Nucleotide.across with a Nucleotide instance, you're "
+                  f"using a {type(nucleotide)} instance")
+        if self._across:
+            warnings.warn(
+                f"Setting across {nucleotide} with index {nucleotide.index}"
+                f" when this nucleotide (index={self.index}) already has an"
+                f" across nucleotide: {self._across} (index={self._across.index})!"
+            )
+            self._across.across = None
+        self._across = nucleotide
+
+    def make_3p(base: str) -> "Nucleotide":
+        raise NotImplementedError
+
+    def make_5p(
+        self, 
+        base: str, 
+        angle: float = 0.626, 
+        rise: float = 0.390,
+    ) -> "Nucleotide":
+        """
+        Returns a new Nucleotide in the 5' direction. The angle used
+        for rotating the a1 vector can be specified in radians.
+
+        Args:
+        
+        base
+            standard string base
+        angle (0.626) 
+            angle of a1 rotation around a3 axis in radians
+        rise (0.390)
+            difference in a3 direction between nucleotides
+
+        Returns:
+        
+        A new Nucleotide generated to be in the preferred orientation
+        in the 5' direction
+        """
+        # shift round in a1 direction
+        rotation_matrix = get_rotation_matrix(self._a3, angle)
+        a1 = np.dot(
+                rotation_matrix,
+                self._a1,
+            )
+        # shift up in a3 direction
+        new_base = self.pos_base + rise * self._a3
+        new_pos = new_base - a1 * SHIFT_BASE
+        new_pos += SHIFT_ROUND * np.cross(self._a3, a1)
+        return Nucleotide(base, new_pos, a1, self._a3.copy())
+
+
+    def make_across(self) -> "Nucleotide":
+        """
+        Returns:
+        
+        A Nucleotide across (aka complementary)
+        """
+        if self._across:
+            warnings.warn(
+                f"Using Nucleotide.make_across when this nucleotide "
+                f"(index={self.index}) already has an across nucleotide: "
+                f"{self._across} (index={self._across.index})!"
+            )
+            self._across.across = None
+        a1 = -self._a1
+        a3 = -self._a3
+        pos_com = self.pos_com - a1 * 2 * (SHIFT_BASE + SHIFT_ACROSS)
+        nucleotide = Nucleotide(ACROSS[self._base], pos_com, a1, a3)
+        nucleotide.across = self
+        self.across = nucleotide
+        return nucleotide
+
 
