@@ -1,4 +1,4 @@
-# oxDNA installation
+# LAMMPD installation
 
 ## Summary
 
@@ -12,7 +12,7 @@ To install, we clone the repository from the lammps group repository. It is impo
 $ git clone https://github.com/lammps/lammps.git
 $ cd lammps
 $ cd src
-$ make yes-cgdna yes-molecule yes-asphere yes-kspace
+$ make yes-user-cgdna yes-molecule yes-asphere yes-kspace
 $ make mpi
 ```
 
