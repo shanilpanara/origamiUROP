@@ -10,20 +10,12 @@ In this set of instructions, we will describe how to download and install oxDNA,
 To install, we clone the repository of the softnanolab group, where a live version-controlled update of the latest oxDNA version found from soruceforge is located.
 
 ```bash
-$ git clone https://github.com/softnanolab/oxDNA.git
+$ git clone https://github.com/debeshmandal/oxDNA.git
 $ cd oxDNA
 $ mkdir build
 $ cd build
 $ cmake ..
 $ make -j8
-```
-
-## Test
-
-Once we have correctly installed oxDNA, we should run some simple tests to ensure that our system works. There were previously built tests and a testing suite but these relied on Python 2.7 which is now deprecated. As such we have added some new simple tests, just to verify that the install has worked.
-
-```
-$ make test-softnanolab
 ```
 
 ## Run
