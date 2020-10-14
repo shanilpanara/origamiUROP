@@ -82,9 +82,16 @@ def complex(arg_1: int, arg_2: float) -> pd.DataFrame:
 - `pytest` code is in here
 - All code should be tested in here using standard `pytest` conventions
 
+### `.gitattribute`
+
+- Remove Jupyter Notebooks from the language line count
+
+
 ### `.gitignore`
 
 - Standard usage
+- Note that all generated files should be on here except those for testing
+- Make sure no `.DS_Store` files are added ever!
 
 ### `.travis.yml`
 
