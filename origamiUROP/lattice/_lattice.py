@@ -543,7 +543,7 @@ class Lattice:
             # add padding to match
             polygon += [self.padding, self.padding, 0]
 
-        ax.plot(polygon[:, 0], polygon[:, 1], "r--", linewidth = 1, alpha = 0.5)
+        ax.plot(polygon[:, 0], polygon[:, 1], "r", linewidth = 1, alpha = 1.0)
 
         return ax
 
@@ -581,17 +581,17 @@ class Lattice:
         ax.xaxis.set_major_locator(MultipleLocator(ticks[0]))
         ax.yaxis.set_major_locator(MultipleLocator(ticks[1]))
         ax.set_xlabel("No. of nucleotides")
-        ax.set_ylabel("No. of strands")
+        ax.set_ylabel("No. of helices")
 
-        point_style = itertools.cycle(["ko", "b.","r.","cP"])
-        point_size = itertools.cycle([0.5, 2.5])
+        point_style = itertools.cycle(["go", "bx","r.","cP"])
+        point_size = itertools.cycle([2, 2.5])
         for points in plot_these:
             if np.shape(points)[1] not in [2,3]: # if array
                 nodes = self.array_to_coords(points)
             else:
                 nodes = points
             # Lattice sites then crossover sites
-            ax.plot(nodes[:, 0], nodes[:, 1], next(point_style), ms=next(point_size), alpha=0.25)
+            ax.plot(nodes[:, 0], nodes[:, 1], next(point_style), ms=next(point_size), alpha=1)
         
         if poly:
             self.plotPolygon(ax, plot_these[0], coords=True)
