@@ -13,6 +13,7 @@ from typing import List
 from itertools import cycle
 from copy import deepcopy
 
+from origamiUROP.lattice.utils import find_crossover_locations
 
 class StapleNode(DNANode):
     def __init__(self, position: np.ndarray):
@@ -39,10 +40,7 @@ class StapleRoute(Strand):
 
     @property
     def edges(self):
-        _edges = [
-            StapleEdge(node, self.nodes[i + 1])
-            for i, node in enumerate(self.nodes[:-1])
-        ]
+        _edges = [StapleEdge(node, self.nodes[i + 1]) for i, node in enumerate(self.nodes[:-1])]
         return _edges
 
     @property
@@ -55,16 +53,23 @@ class StapleRoute(Strand):
         for i, edge in enumerate(self.edges):
             if i % 2 == 1:
                 continue
+            
+            # Find start of staple
+            node1 = int(edge.vertices[0][0])
+            node2 = int(edge.vertices[1][0])
 
-            x1 = int(edge.vertices[0][0])
-            x2 = int(edge.vertices[1][0])
-            row = int(edge.vertices[0][1])
-            if len(self.scaffold_rows) - 1 == row:
-                break
-            nucleotides = []
+            x1 = node1
+            x2 = node2
+            # if len(self.scaffold_rows) - 1 == row:
+            #     break
+            
+            row = int(edge.vertices[0][1]) # == int(edge.vertices[1][0])
             scaffold_row = self.scaffold_rows[row]
+            nucleotides = []
+            
 
             if x1 > x2:
+                # this doesnt make sense to slice, hence switch ----x2-------x1  to  x1-------x2----
                 x1, x2 = x2, x1
                 for nucleotide in scaffold_row.nucleotides[x1:x2 + 1]:
                     nucleotides.append(nucleotide.make_across())
@@ -103,8 +108,7 @@ class StapleCollection:
     def add_staples(self, staple_strand: Strand):
         self._staples.append(staple_strand)
 
-    def generate_staple(self, node1: int, node2: int, row_indices: List[int],
-                        shift) -> StapleRoute:
+    def generate_staple(self, node1: int, node2: int, row_indices: List[int], shift) -> StapleRoute:
         node_cycle = cycle([node1, node2, node2, node1])
         staple_nodes = []
 
@@ -155,13 +159,13 @@ class StapleCollection:
             node1, node2 = self.compute_turning_points(df.loc[i, "start x"], df.loc[i, "start side"], staple_size)
             """ DETERMINE WHICH ROWS TO STAPLE OVER"""
             # if shift is True, staples are generated in the reverse direction in "generate_staple()"
-            shift = False
+            flip = False
 
             ### DEAL WITH 3 ROWS CASES ###
             # if i is not 0, the edge lines up on rows i-1 to i+1 and edge of i-1 != i-2 or i = 1 (where i-2 doesnt exist)
-            if not i == 0 and self.all_same(df.loc[[i - 1, i + 1], "end x"].tolist() + [df.loc[i, "start x"]])  and (i == 1 or df.loc[i - 1, "end x"] != df.loc[i - 2, "start x"]):
+            if not i == 0 and len(set((df.loc[[i - 1, i + 1], "end x"].tolist() + [df.loc[i, "start x"]]))) == 1  and (i == 1 or df.loc[i - 1, "end x"] != df.loc[i - 2, "start x"]):
                 rows = [i - 1, i, i + 1]
-                shift = True
+                flip = True
             # if i is not the last one, the edge lines up on rows i to i+1 and edge of i+1 != i+2 or i = N-2 (where i+3 doesnt exist)
             elif not i + 1 == len(df) - 1 and self.all_same(df.loc[[i, i + 2], "start x"].tolist() + [df.loc[i+1, "end x"]]) and (i == len(df) - 3 or df.loc[i + 2, "start x"] != df.loc[i + 3, "end x"]) :
                 rows = [i, i + 1, i + 2]
@@ -171,14 +175,14 @@ class StapleCollection:
                 node1, node2 = self.compute_turning_points(df.loc[i, "end x"],df.loc[i, "start side"],
                                                            staple_size, opposite = True)
                 rows = [i, i+1]
-                shift = True
+                flip = True
             
             ### DEAL WITH CASES WHERE TOP IS BIGGER ###
             elif df.loc[i+1, "end x"] > df.loc[i, "start x"]:
                 node1, node2 = self.compute_turning_points(df.loc[i, "end x"],df.loc[i, "start side"],
                                                            staple_size, opposite = True)
                 rows = [i, i+1]
-                shift = True
+                flip = True
 
             ### DEAL WITH THE CASES: ROW i == OCCUPIED ###
             ## SHORTEN
@@ -191,16 +195,25 @@ class StapleCollection:
             else:
                 rows = [i, i + 1]
 
+
+            ### SHIFT NODE INDEX RELATIVE TO THE FIRST NUCLEOTIDE FROM THE STARTING SIDE
+            # if df.loc[i, "start side"] == "right":
+            #     node1 += df.loc[i, "r shift"]
+            #     node2 += df.loc[i, "r shift"]
+            # elif df.loc[i, "start side"] == "left":
+            #     node1 += df.loc[i, "l shift"]
+            #     node2 += df.loc[i, "l shift"]
+
             # GENERATE AND ADD STAPLES TO THE LIST
-            staples.append(self.generate_staple(node1, node2, rows, shift))
+            staples.append(self.generate_staple(node1, node2, rows, flip))
 
         self._staples += staples
 
-    def plot_nodes(self, strand: Strand, ax, colour='r', width=0.01, **kwargs):
+    def plot_nodes(self, strand: Strand, ax, colour='r', width=0.2, **kwargs):
         nodes = np.array(strand.nodes)
         #plt.grid(True)
         ax.plot(nodes[:, 0], nodes[:, 1], 'k', ms=0.5, alpha=0)
-        ax.xaxis.set_major_locator(MultipleLocator(2))
+        ax.xaxis.set_major_locator(MultipleLocator(20))
         ax.yaxis.set_major_locator(MultipleLocator(5))
         ax.set_xlabel("No. of nucleotides")
         ax.set_ylabel("No. of strands")
@@ -223,9 +236,9 @@ class StapleCollection:
         else:
             colours = cycle((colour))
         if route:
-            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.05, alpha = 0.05)
+            self.plot_nodes(strand = route, ax = ax, colour = 'k', width = 0.05, alpha = 0.4)
         for staple in self.staples:
-            self.plot_nodes(strand = staple, ax = ax, colour = next(colours))
+            self.plot_nodes(strand = staple, ax = ax, colour = next(colours), alpha = 0.8)
         
         plt.gca().set_aspect(5)
         if fout:
@@ -247,6 +260,8 @@ class Scaffold:
         self.bounds = self.get_bounds()
 
         self.array = self.get_scaffold_array()
+        self.r_shift = self.get_r_shift()
+        self.l_shift = self.get_l_shift()
 
     def get_row_sizes(self) -> list:
         """ Returns length of each row """
@@ -277,6 +292,14 @@ class Scaffold:
         for row in range(len(self.edges)):
             scaffold[row][min(self.bounds[row]):max(self.bounds[row]) + 1] = 1
         return scaffold
+    
+    def get_r_shift(self) -> int:
+        max_x = max(self.sizes)
+        return [max_x - start_x for start_x in self.startx]
+
+    def get_l_shift(self) -> int:
+        min_x = 0
+        return [min_x - start_x for start_x in self.startx]
 
     def n_staples(self, staple_width=None):
         """ Returns no. of staples per row """
@@ -304,6 +327,8 @@ class Scaffold:
                 "start x": self.startx,
                 "end x": self.endx,
                 "bounds": self.bounds,
+                "r shift": self.r_shift,
+                "l shift": self.l_shift,
                 "staples (5)": self.n_staples(self.staple_widths[0]),
                 "staples (16)": self.n_staples(self.staple_widths[1]),
                 "unpaired bases (5)": self.unpaired_bases(self.staple_widths[0]),
@@ -353,7 +378,7 @@ def test_StapleRoute(route: LatticeRoute):
 
 def generate_route(polygon_vertices: np.ndarray):
     polygon = BoundaryPolygon(polygon_vertices)
-    lattice = polygon.dna_snake(straightening_factor=5, start_side="left")
+    lattice = polygon.dna_snake(straightening_factor=5, start_side="left", grid_size= [0.34, 2.5])
     return lattice.route()
 
 
@@ -395,7 +420,7 @@ if __name__ == "__main__":
     # nodes = [LatticeNode(np.array(i)) for i in route_vertices]
     # route = LatticeRoute(nodes)
     """ Generate the route from polygon """
-    route = generate_route(hexagon * 30)
+    route = generate_route(square * 20)
     route.plot()
 
     # """ Run side_staples """
@@ -415,6 +440,6 @@ if __name__ == "__main__":
     collection = StapleCollection(route=route)
     collection.run_algorithm_1()
     collection.plot()
-    plt.imshow(collection.stapled_array[::-1])
-    # system = route.system(collection.staples)
-    # system.write_oxDNA("stapled_hex")
+    plt.imshow(collection.stapled_array[::-1], aspect = 5)
+    system = route.system(collection.staples)
+    system.write_oxDNA("stapled_hex")
